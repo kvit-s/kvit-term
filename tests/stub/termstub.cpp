@@ -108,6 +108,15 @@ int main(int argc, char **argv)
     if (mode == "isatty") {
         std::printf("stdin %d stdout %d stderr %d\n", isatty(fileno(stdin)) ? 1 : 0,
                     isatty(fileno(stdout)) ? 1 : 0, isatty(fileno(stderr)) ? 1 : 0);
+#ifdef _WIN32
+        // What kind of thing standard output actually is, which is the first
+        // question worth asking when a child does not believe it is on a
+        // terminal: 2 is a character device, which is what a console is, and
+        // 3 is a pipe, which is what it gets when the pseudoconsole was not
+        // attached and it inherited the parent's handles instead.
+        std::printf("stdout-type %lu\n",
+                    (unsigned long) GetFileType(GetStdHandle(STD_OUTPUT_HANDLE)));
+#endif
         std::fflush(stdout);
         return 0;
     }

@@ -8,6 +8,10 @@ set_target_properties(termstub PROPERTIES WIN32_EXECUTABLE OFF MACOSX_BUNDLE OFF
 
 function(kvitterm_unit_test name)
     qt_add_executable(${name} unit/${name}.cpp)
+    # A console application on Windows, where qt_add_executable would
+    # otherwise make a windowed one whose standard output goes nowhere — and
+    # with it every word the test framework prints.
+    set_target_properties(${name} PROPERTIES WIN32_EXECUTABLE OFF MACOSX_BUNDLE OFF)
     target_link_libraries(${name} PRIVATE kvit-term Qt6::Test ${ARGN})
     target_include_directories(${name} PRIVATE ${PROJECT_SOURCE_DIR}/src)
     target_compile_definitions(${name} PRIVATE
@@ -26,6 +30,7 @@ kvitterm_unit_test(test_session)
 # The view's suite: Qt Quick tests loading real QML with the module imported,
 # offscreen, and asserting on the model behind the item rather than on pixels.
 qt_add_executable(test_terminalview shell/shellmain.cpp)
+set_target_properties(test_terminalview PROPERTIES WIN32_EXECUTABLE OFF MACOSX_BUNDLE OFF)
 target_link_libraries(test_terminalview PRIVATE kvit-term Qt6::QuickTest Qt6::Qml)
 target_compile_definitions(test_terminalview PRIVATE
     KVITTERM_STUB_PATH="$<TARGET_FILE:termstub>"

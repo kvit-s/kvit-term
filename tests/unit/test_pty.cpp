@@ -63,7 +63,8 @@ private Q_SLOTS:
         QVERIFY2(session.pty.start(stubParams({QStringLiteral("isatty")}), &error),
                  qPrintable(error));
         QTRY_VERIFY(session.finished);
-        QCOMPARE(session.output.trimmed(), QByteArray("stdin 1 stdout 1 stderr 1"));
+        QVERIFY2(session.output.contains("stdin 1 stdout 1 stderr 1"),
+                 "the child did not see a terminal; " + session.output.trimmed());
         QCOMPARE(session.exitCode, 0);
     }
 
