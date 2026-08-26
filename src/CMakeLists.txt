@@ -134,8 +134,20 @@ include(CMakePackageConfigHelpers)
 set(KVITTERM_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/KvitTerm)
 set(KVITTERM_INSTALL_SHELLDIR ${CMAKE_INSTALL_DATADIR}/kvitterm/shell)
 
-install(TARGETS kvit-term kvitterm_vterm
+# A static QML module has its generated qmldir and type description compiled
+# into object libraries of their own, and CMake refuses to export a target
+# whose dependencies are not exported with it. They do not exist in a shared
+# build, which is why this only ever fails for somebody else.
+set(KVITTERM_EXPORT_TARGETS kvit-term kvitterm_vterm)
+foreach(index RANGE 1 8)
+    if(TARGET kvit-term_resources_${index})
+        list(APPEND KVITTERM_EXPORT_TARGETS kvit-term_resources_${index})
+    endif()
+endforeach()
+
+install(TARGETS ${KVITTERM_EXPORT_TARGETS}
     EXPORT KvitTermTargets
+    OBJECTS DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

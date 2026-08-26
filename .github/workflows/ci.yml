@@ -61,3 +61,17 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
         run: ctest --test-dir build --build-config RelWithDebInfo --output-on-failure
+
+      # Nothing in the library's own build exercises the installed package:
+      # the export set, the config file and the include and link paths are
+      # only ever wrong for other people. This builds a separate project that
+      # finds it the way somebody else's application would.
+      - name: install
+        run: cmake --install build --config RelWithDebInfo --prefix ${{ github.workspace }}/staging
+
+      - name: build against the installed package
+        run: >
+          cmake -S examples/embedding-check -B build-embedding-check
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          -DCMAKE_PREFIX_PATH="${{ github.workspace }}/staging"
+          && cmake --build build-embedding-check --config RelWithDebInfo
