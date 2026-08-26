@@ -34,6 +34,7 @@
 #include <QtCore/QDir>
 #include <QtCore/QMutex>
 #include <QtCore/QThread>
+#include <QtCore/QTimer>
 #include <QtCore/QWaitCondition>
 #include <QtCore/QWinEventNotifier>
 
@@ -245,6 +246,24 @@ public:
         }
     }
 
+    // Waits for the output pipe to go quiet before reporting the exit.
+    void drainAndFinish(int exitCode, int attempt)
+    {
+        DWORD available = 0;
+        const bool pipeHasData = outputRead != INVALID_HANDLE_VALUE
+                && PeekNamedPipe(outputRead, nullptr, 0, nullptr, &available, nullptr)
+                && available > 0;
+        if (pipeHasData && attempt < 25) {
+            QTimer::singleShot(20, q, [this, exitCode, attempt] {
+                drainAndFinish(exitCode, attempt + 1);
+            });
+            return;
+        }
+        // One more turn of the event loop, so that whatever the reader thread
+        // has already picked up is delivered before the exit is.
+        QTimer::singleShot(20, q, [this, exitCode] { Q_EMIT q->finished(exitCode); });
+    }
+
     void closeProcessHandles()
     {
         delete exitNotifier;
@@ -431,12 +450,14 @@ bool Pty::start(const Pty::Params &params, QString *error)
         d->exitNotifier->setEnabled(false);
         DWORD exitCode = 0;
         GetExitCodeProcess(d->processInfo.hProcess, &exitCode);
-        // The console host may still have buffered output; giving the reader
-        // a moment to deliver it costs nothing on a process that has already
-        // exited and saves the last line of a short-lived command.
-        QMetaObject::invokeMethod(this, [this, exitCode] {
-            Q_EMIT finished(int(exitCode));
-        }, Qt::QueuedConnection);
+
+        // What the child wrote just before it exited is still in the console
+        // host's pipe, and the reader is on its own thread. Reporting the exit
+        // straight away would mean a short-lived command — a build that fails
+        // in a tenth of a second — losing its last and most interesting lines.
+        // So drain first, and give up after half a second rather than wait on
+        // a console host that has stopped answering.
+        d->drainAndFinish(int(exitCode), 0);
     });
 
     d->reader = new PtyReader(this, d->outputRead);

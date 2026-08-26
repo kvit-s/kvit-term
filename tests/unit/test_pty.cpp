@@ -49,6 +49,25 @@ private:
     }
 
 private Q_SLOTS:
+    // The suite's own trace, on standard error, because standard output does
+    // not survive the trip out of a Windows test runner. Only when asked for.
+    void init()
+    {
+        if (qEnvironmentVariableIsSet("KVITTERM_PTY_DEBUG")) {
+            std::fprintf(stderr, "[test_pty] begin %s\n", QTest::currentTestFunction());
+            std::fflush(stderr);
+        }
+    }
+
+    void cleanup()
+    {
+        if (qEnvironmentVariableIsSet("KVITTERM_PTY_DEBUG")) {
+            std::fprintf(stderr, "[test_pty] end   %s: %s\n", QTest::currentTestFunction(),
+                         QTest::currentTestFailed() ? "FAILED" : "passed");
+            std::fflush(stderr);
+        }
+    }
+
     void initTestCase()
     {
         // Unbuffered, so that a case which takes the process down with it
