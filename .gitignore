@@ -1,0 +1,14 @@
+# Design documents and planning notes, kept out of the public repository.
+spec/
+
+# CMake build trees. A build tree is a cache: delete it rather than
+# investigate it, since every one of them is one command away from existing
+# again.
+build*/
+
+# Editor and tooling droppings.
+.cache/
+compile_commands.json
+.vscode/
+.idea/
+*.user
