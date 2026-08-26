@@ -31,10 +31,14 @@ void emitTerminalSize()
 #ifdef _WIN32
     CONSOLE_SCREEN_BUFFER_INFO info;
     if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info)) {
-        std::printf("size %dx%d\n", info.srWindow.Right - info.srWindow.Left + 1,
-                    info.srWindow.Bottom - info.srWindow.Top + 1);
+        // The window is what a program should size itself to; the buffer can
+        // be taller. Both are reported, because which one a pseudoconsole
+        // sets is exactly the sort of thing that differs.
+        std::printf("size %dx%d buffer %dx%d\n", info.srWindow.Right - info.srWindow.Left + 1,
+                    info.srWindow.Bottom - info.srWindow.Top + 1, int(info.dwSize.X),
+                    int(info.dwSize.Y));
     } else {
-        std::printf("size unknown\n");
+        std::printf("size unknown (%lu)\n", (unsigned long) GetLastError());
     }
 #else
     struct winsize size = {};

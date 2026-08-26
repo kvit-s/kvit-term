@@ -519,6 +519,19 @@ void Pty::hangup()
     // Closing the pseudoconsole is what a closed window looks like to the
     // child: the console host tells it the console is gone.
     d->closeHandles();
+
+    // On Unix the kernel delivers SIGHUP and a program that does not handle it
+    // dies at once. Here the child is asked rather than told, and a program
+    // that ignores the question would otherwise outlive the terminal it was
+    // started for, so the question becomes an instruction.
+    if (d->running && d->processInfo.hProcess) {
+        QTimer::singleShot(3000, this, [this] {
+            if (d->running && d->processInfo.hProcess) {
+                report("the child ignored the pseudoconsole closing; terminating it");
+                TerminateProcess(d->processInfo.hProcess, 1);
+            }
+        });
+    }
 }
 
 void Pty::terminateProcess()
