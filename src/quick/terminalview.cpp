@@ -51,16 +51,34 @@ public:
         // Integers, so that a column always lands on the same pixel: at
         // fractional widths the hundredth column is half a pixel off and the
         // grid visibly shears.
-        cellWidth = qMax(1, int(std::ceil(metrics.horizontalAdvance(QLatin1Char('M')))));
+        const qreal naturalAdvance = metrics.horizontalAdvance(QLatin1Char('M'));
+        cellWidth = qMax(1, qRound(naturalAdvance));
         cellHeight = qMax(1, int(std::ceil(metrics.height())));
         baseline = metrics.ascent();
 
+        // Each glyph is made to advance exactly one cell.
+        //
+        // Text is drawn a run at a time rather than a cell at a time, which
+        // means the font's own advances decide where the characters inside a
+        // run land. A monospaced font's advance is rarely a whole number of
+        // pixels, so over nine or ten characters the run drifts by a pixel or
+        // two from the grid — and then the next run, which starts at its own
+        // column, snaps back, leaving a visible gap in the middle of a word
+        // wherever the colour changes.
+        const auto fitToCell = [this](QFont &candidate) {
+            const qreal advance = QFontMetricsF(candidate).horizontalAdvance(QLatin1Char('M'));
+            candidate.setLetterSpacing(QFont::AbsoluteSpacing, cellWidth - advance);
+        };
+
+        plainFont = font;
         boldFont = font;
         boldFont.setBold(true);
         italicFont = font;
         italicFont.setItalic(true);
         boldItalicFont = boldFont;
         boldItalicFont.setItalic(true);
+        for (QFont *candidate : {&plainFont, &boldFont, &italicFont, &boldItalicFont})
+            fitToCell(*candidate);
     }
 
     void updateGrid()
@@ -219,7 +237,8 @@ public:
     TerminalPalette *paletteObject = nullptr;
     TerminalPalette defaultPalette;
 
-    QFont font;
+    QFont font;        // as the application set it
+    QFont plainFont;   // and as it is drawn, one cell per glyph
     QFont boldFont;
     QFont italicFont;
     QFont boldItalicFont;
@@ -592,7 +611,7 @@ void TerminalView::paint(QPainter *painter)
             const QFont &runFont = cell.style.bold && cell.style.italic ? d->boldItalicFont
                                  : cell.style.bold                     ? d->boldFont
                                  : cell.style.italic                   ? d->italicFont
-                                                                       : d->font;
+                                                                       : d->plainFont;
             painter->setFont(runFont);
             painter->setPen(foreground);
             painter->drawText(QPointF(column * d->cellWidth, top + d->baseline), run);
@@ -642,7 +661,7 @@ void TerminalView::paint(QPainter *painter)
                 const QString text = screen->cell(position.y(), position.x()).text();
                 if (!text.isEmpty()) {
                     painter->setPen(colours.cursorText);
-                    painter->setFont(d->font);
+                    painter->setFont(d->plainFont);
                     painter->drawText(QPointF(box.x(), box.y() + d->baseline), text);
                 }
                 break;

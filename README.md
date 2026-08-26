@@ -16,6 +16,9 @@ TerminalView {
 
 That is a working terminal running the user's shell.
 
+![A terminal drawn by kvit-term, showing colours, text attributes and a
+progress line redrawn in place](docs/terminal.png)
+
 ## Why this exists
 
 An application that runs developer tools in a panel — a build, a test suite, a

@@ -49,6 +49,26 @@ tests: the console host repaints the whole screen on resize, and it rewrites
 the child's console output into escape sequences, so both the timing and the
 content differ from Unix.
 
+Two things about the Windows path were only discovered by running it, and both
+are the kind that look like a broken terminal rather than a broken detail.
+
+A process's own standard handles are passed into its child's process
+parameters, where they take precedence over the ones the pseudoconsole
+installs. When the parent has a console that makes no difference; when the
+parent's handles are pipes — any redirected parent, a test runner included —
+the child writes to the parent's pipe instead of to the terminal, reports that
+it is not on a terminal, and turns its colours off. They are cleared for the
+duration of `CreateProcessW` and restored immediately after, rather than
+declared empty with `STARTF_USESTDHANDLES`: that flag means "these are the
+handles, take them", and empty ones would be taken literally.
+
+The console host also writes its own sequences into the stream, and it writes
+them *between* the child's characters — hiding the cursor, clearing the
+screen, setting the window title from the program's path — so a line the child
+printed in one call arrives split around them. Anything asserting on raw bytes
+from a pseudo-terminal has to account for that; the emulator does not care,
+which is the point of having one.
+
 Both paths share one form of flow control. Suspending reading fills the pipe,
 which blocks the child in its own `write`, which is what stops a runaway
 process from outrunning the interface. The view suspends when damage piles up
@@ -118,6 +138,14 @@ be trusted to advance by exactly one cell — code points from U+1100 upwards,
 and any cell holding combining marks — because a monospaced font's advance is
 only reliable for the range it was designed for, and letting an ideograph run
 inside a text run shears the whole grid after it.
+
+Each glyph is made to advance exactly one cell, by giving the drawing fonts a
+letter spacing of the difference between the cell width and the font's natural
+advance. Without it, the font's own advances decide where characters inside a
+run land: a monospaced font's advance is rarely a whole number of pixels, so
+over nine or ten characters a run drifts a pixel or two from the grid, and the
+next run — which starts at its own column — snaps back, leaving a visible gap
+in the middle of a word wherever the colour changes.
 
 If the painter turns out to be too slow for output rates nobody has hit yet,
 the escape hatch is a scene-graph node with a texture atlas rather than a
