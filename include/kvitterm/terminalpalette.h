@@ -7,6 +7,7 @@
 #pragma once
 
 #include <QtCore/QObject>
+#include <QtCore/QVariant>
 #include <QtQml/qqmlregistration.h>
 
 #include "kvitterm_global.h"

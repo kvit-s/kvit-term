@@ -37,3 +37,4 @@ set_tests_properties(test_terminalview PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
     RUN_SERIAL TRUE
 )
+kvitterm_unit_test(test_shellintegration)

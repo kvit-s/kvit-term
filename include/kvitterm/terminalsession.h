@@ -9,6 +9,7 @@
 #pragma once
 
 #include <QtCore/QObject>
+#include <QtCore/QVariant>
 #include <QtCore/QVariantMap>
 #include <QtQml/qqmlregistration.h>
 #include <QtQml/QQmlParserStatus>

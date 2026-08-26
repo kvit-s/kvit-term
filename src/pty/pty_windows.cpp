@@ -282,7 +282,7 @@ bool Pty::start(const Pty::Params &params, QString *error)
         return fail(QStringLiteral("Could not prepare the process attributes: %1")
                         .arg(formatLastError(GetLastError())));
     }
-    if (!UpdateProcThreadAttribute(d->attributeList, 0, PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE_HANDLE,
+    if (!UpdateProcThreadAttribute(d->attributeList, 0, PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE,
                                    d->pseudoConsole, sizeof(d->pseudoConsole), nullptr, nullptr)) {
         return fail(QStringLiteral("Could not attach the pseudoconsole to the child: %1")
                         .arg(formatLastError(GetLastError())));

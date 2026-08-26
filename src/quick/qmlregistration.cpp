@@ -17,7 +17,12 @@ namespace kvitterm {
 
 void ensureQmlTypesRegistered()
 {
-    static const auto reference = &qml_register_types_KvitTerm;
+    // Volatile on purpose. Taking the address into an ordinary variable has
+    // no observable effect, so the compiler removes it, the object file ends
+    // up referring to nothing, and the linker discards the registration after
+    // all — which shows up as "TerminalView is not a type" in a static build
+    // and nowhere else. A volatile store has to be emitted.
+    static void *volatile reference = reinterpret_cast<void *>(&qml_register_types_KvitTerm);
     Q_UNUSED(reference);
 }
 

@@ -12,6 +12,7 @@ set(KVITTERM_HEADERS
     ${PROJECT_SOURCE_DIR}/include/kvitterm/terminalsession.h
     ${PROJECT_SOURCE_DIR}/include/kvitterm/terminalview.h
     ${PROJECT_SOURCE_DIR}/include/kvitterm/qmlregistration.h
+    ${PROJECT_SOURCE_DIR}/include/kvitterm/shellintegration.h
 )
 
 set(KVITTERM_SOURCES
@@ -23,6 +24,7 @@ set(KVITTERM_SOURCES
     core/screen.cpp
     core/screenexport.cpp
     pty/pty_common.cpp
+    integration/shellintegration.cpp
     quick/qmlregistration.cpp
     quick/terminalpalette.cpp
     quick/terminalsession.cpp
@@ -34,7 +36,30 @@ else()
     list(APPEND KVITTERM_SOURCES pty/pty_unix.cpp)
 endif()
 
+# The shell snippets are compiled into the library: an application installing
+# shell integration should not have to find a file on disk that a packager may
+# have put anywhere.
+set(KVITTERM_SHELL_SCRIPTS
+    ${PROJECT_SOURCE_DIR}/shell/kvitterm.bash
+    ${PROJECT_SOURCE_DIR}/shell/kvitterm.zsh
+    ${PROJECT_SOURCE_DIR}/shell/kvitterm.fish
+    ${PROJECT_SOURCE_DIR}/shell/kvitterm.ps1
+)
+set(KVITTERM_GENERATED_SCRIPTS ${CMAKE_CURRENT_BINARY_DIR}/shellscripts_generated.cpp)
+add_custom_command(
+    OUTPUT ${KVITTERM_GENERATED_SCRIPTS}
+    COMMAND ${CMAKE_COMMAND}
+            -DOUTPUT=${KVITTERM_GENERATED_SCRIPTS}
+            "-DINPUTS=${KVITTERM_SHELL_SCRIPTS}"
+            -P ${PROJECT_SOURCE_DIR}/cmake/embed_shell_scripts.cmake
+    DEPENDS ${KVITTERM_SHELL_SCRIPTS} ${PROJECT_SOURCE_DIR}/cmake/embed_shell_scripts.cmake
+    COMMENT "Embedding the shell integration snippets"
+    VERBATIM
+)
+set_source_files_properties(${KVITTERM_GENERATED_SCRIPTS} PROPERTIES GENERATED TRUE SKIP_AUTOMOC ON)
+
 qt_add_library(kvit-term ${KVITTERM_LIB_TYPE} ${KVITTERM_SOURCES})
+target_sources(kvit-term PRIVATE ${KVITTERM_GENERATED_SCRIPTS})
 add_library(KvitTerm::kvit-term ALIAS kvit-term)
 
 target_include_directories(kvit-term
@@ -46,6 +71,7 @@ target_include_directories(kvit-term
         # Qt generates the QML type registration with `#include <header.h>`
         # by bare file name, so the directory the headers actually live in has
         # to be reachable that way as well as by `kvitterm/header.h`.
+        ${CMAKE_CURRENT_BINARY_DIR}
         ${PROJECT_SOURCE_DIR}/include/kvitterm
 )
 target_link_libraries(kvit-term
@@ -61,6 +87,9 @@ qt_add_qml_module(kvit-term
     VERSION 1.0
     NO_PLUGIN
     DEPENDENCIES QtQuick
+    # The generated qmldir and type description have to sit in a directory
+    # whose path ends in the module's own name, or qmllint cannot find them.
+    OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/qmlmodules/KvitTerm
 )
 target_compile_definitions(kvit-term
     PRIVATE KVITTERM_BUILDING_LIBRARY
