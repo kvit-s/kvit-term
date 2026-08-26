@@ -20,7 +20,13 @@ function(kvitterm_unit_test name)
     )
     add_dependencies(${name} termstub)
     add_test(NAME ${name} COMMAND ${name})
-    set_tests_properties(${name} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    # A suite that hangs should say so in two minutes rather than in the
+    # twenty-five ctest allows by default: everything here either talks to a
+    # child process that answers immediately or does not talk to one at all.
+    set_tests_properties(${name} PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+        TIMEOUT 120
+    )
 endfunction()
 
 kvitterm_unit_test(test_pty)
@@ -41,6 +47,7 @@ add_test(NAME test_terminalview COMMAND test_terminalview)
 set_tests_properties(test_terminalview PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
     RUN_SERIAL TRUE
+    TIMEOUT 120
 )
 kvitterm_unit_test(test_shellintegration)
 kvitterm_unit_test(test_links)

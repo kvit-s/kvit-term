@@ -58,6 +58,9 @@ jobs:
       # with each other when run in parallel, which produces failure counts
       # that swing from run to run and cannot be used to judge a change.
       - name: test
+        # A job that hangs should say so quickly. ctest's own per-test limit
+        # is set in tests/CMakeLists.txt; this bounds the step as a whole.
+        timeout-minutes: 12
         env:
           QT_QPA_PLATFORM: offscreen
           # Makes the Windows pseudoconsole report each step of attaching

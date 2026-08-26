@@ -362,25 +362,27 @@ bool Pty::start(const Pty::Params &params, QString *error)
     startup.StartupInfo.cb = sizeof(STARTUPINFOEXW);
     startup.lpAttributeList = d->attributeList;
 
-    // Empty standard handles, deliberately.
+    // This process's own standard handles are kept away from the child.
     //
-    // Without this, whatever standard handles this process happens to have
-    // are copied into the child's process parameters, and they take
-    // precedence over the ones the pseudoconsole would install. When the
-    // parent's handles are a console that is invisible; when they are pipes —
-    // which is what any redirected parent has, a test runner included — the
-    // child writes to the parent's pipe instead of to the terminal, reports
-    // that it is not on a terminal at all, and turns its colours off.
-    // Declaring them empty leaves console initialisation to fill them in from
-    // the pseudoconsole.
-    startup.StartupInfo.dwFlags = STARTF_USESTDHANDLES;
-    startup.StartupInfo.hStdInput = nullptr;
-    startup.StartupInfo.hStdOutput = nullptr;
-    startup.StartupInfo.hStdError = nullptr;
-
-    report("parent standard handles in %p out %p err %p",
-           (void *) GetStdHandle(STD_INPUT_HANDLE), (void *) GetStdHandle(STD_OUTPUT_HANDLE),
-           (void *) GetStdHandle(STD_ERROR_HANDLE));
+    // Windows passes them into a child's process parameters, where they take
+    // precedence over the ones the pseudoconsole installs. Where this process
+    // has a console that is invisible; where its handles are pipes — any
+    // redirected parent, a test runner included — the child ends up writing
+    // to the parent's pipe rather than to the terminal, reports that it is
+    // not on a terminal, and turns its colours off.
+    //
+    // Clearing them for the duration of the call, rather than declaring them
+    // empty with STARTF_USESTDHANDLES, leaves console initialisation free to
+    // fill the child's in from the pseudoconsole: the flag would mean "these
+    // are the handles, take them", and empty ones would be taken literally.
+    const HANDLE savedInput = GetStdHandle(STD_INPUT_HANDLE);
+    const HANDLE savedOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+    const HANDLE savedError = GetStdHandle(STD_ERROR_HANDLE);
+    report("parent standard handles in %p out %p err %p", (void *) savedInput,
+           (void *) savedOutput, (void *) savedError);
+    SetStdHandle(STD_INPUT_HANDLE, nullptr);
+    SetStdHandle(STD_OUTPUT_HANDLE, nullptr);
+    SetStdHandle(STD_ERROR_HANDLE, nullptr);
 
     QVarLengthArray<wchar_t, 512> commandLineBuffer(commandLine.size() + 1);
     commandLine.toWCharArray(commandLineBuffer.data());
@@ -393,15 +395,23 @@ bool Pty::start(const Pty::Params &params, QString *error)
             ? QString()
             : QDir::toNativeSeparators(params.workingDirectory);
 
-    if (!CreateProcessW(nullptr, commandLineBuffer.data(), nullptr, nullptr, FALSE,
-                        EXTENDED_STARTUPINFO_PRESENT | CREATE_UNICODE_ENVIRONMENT,
-                        environmentBuffer.data(),
-                        workingDirectory.isEmpty()
-                            ? nullptr
-                            : reinterpret_cast<LPCWSTR>(workingDirectory.utf16()),
-                        &startup.StartupInfo, &d->processInfo)) {
+    const BOOL startedChild =
+        CreateProcessW(nullptr, commandLineBuffer.data(), nullptr, nullptr, FALSE,
+                       EXTENDED_STARTUPINFO_PRESENT | CREATE_UNICODE_ENVIRONMENT,
+                       environmentBuffer.data(),
+                       workingDirectory.isEmpty()
+                           ? nullptr
+                           : reinterpret_cast<LPCWSTR>(workingDirectory.utf16()),
+                       &startup.StartupInfo, &d->processInfo);
+    const DWORD startError = GetLastError();
+
+    SetStdHandle(STD_INPUT_HANDLE, savedInput);
+    SetStdHandle(STD_OUTPUT_HANDLE, savedOutput);
+    SetStdHandle(STD_ERROR_HANDLE, savedError);
+
+    if (!startedChild) {
         return fail(QStringLiteral("Could not start %1: %2")
-                        .arg(params.program, formatLastError(GetLastError())));
+                        .arg(params.program, formatLastError(startError)));
     }
 
     report("started %s as process %lu, startup size %llu, attribute list %p",
