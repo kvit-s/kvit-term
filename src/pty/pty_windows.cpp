@@ -210,15 +210,19 @@ public:
     {
         // The reader goes first and is joined before anything it touches is
         // closed: it polls, so it notices the stop within a few milliseconds.
+        bool readerStopped = true;
         if (reader) {
             reader->stop();
-            if (!reader->wait(3000)) {
-                // It cannot be deleted while it runs, and killing a thread is
-                // worse than leaking one on a path this rare.
-                report("the reader thread did not stop; leaving it behind");
-                reader->setParent(nullptr);
-            } else {
+            readerStopped = reader->wait(3000);
+            if (readerStopped) {
                 delete reader;
+            } else {
+                // It cannot be deleted while it runs, and killing a thread is
+                // worse than leaking one on a path this rare. The pipe it is
+                // reading is left open below for the same reason: closing a
+                // handle out from under a thread is how a rare hang becomes a
+                // rare crash.
+                report("the reader thread did not stop; leaving it and its pipe behind");
             }
             reader = nullptr;
         }
@@ -230,7 +234,7 @@ public:
             CloseHandle(inputWrite);
             inputWrite = INVALID_HANDLE_VALUE;
         }
-        if (outputRead != INVALID_HANDLE_VALUE) {
+        if (outputRead != INVALID_HANDLE_VALUE && readerStopped) {
             CloseHandle(outputRead);
             outputRead = INVALID_HANDLE_VALUE;
         }

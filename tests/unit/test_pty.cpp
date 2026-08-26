@@ -1,6 +1,8 @@
 // The pseudo-terminal layer, proved against a stub program rather than
 // against a shell: a shell's version, its startup files and its prompt all
 // vary between machines, and none of them is what these cases are about.
+#include <cstdio>
+
 #include <QtCore/QCoreApplication>
 #include <QtCore/QFileInfo>
 #include <QtCore/QTemporaryDir>
@@ -49,6 +51,11 @@ private:
 private Q_SLOTS:
     void initTestCase()
     {
+        // Unbuffered, so that a case which takes the process down with it
+        // still leaves a record of how far the suite got. Standard output is
+        // a pipe under a test runner, and the C runtime buffers a pipe until
+        // it is flushed or the process exits cleanly.
+        setvbuf(stdout, nullptr, _IONBF, 0);
         QVERIFY2(QFileInfo::exists(QString::fromLocal8Bit(KVITTERM_STUB_PATH)),
                  "the stub program was not built");
     }
@@ -160,7 +167,9 @@ private Q_SLOTS:
         QVERIFY(session.pty.start(stubParams({QStringLiteral("sleep")})));
         QTRY_VERIFY(session.pty.isRunning());
         session.pty.hangup();
-        QTRY_VERIFY_WITH_TIMEOUT(session.finished, 5000);
+        // Windows takes longer over this: closing the pseudoconsole asks the
+        // child to end, and the console host waits before insisting.
+        QTRY_VERIFY_WITH_TIMEOUT(session.finished, 15000);
     }
 
     void suspendingReadingHoldsOutputBack()
