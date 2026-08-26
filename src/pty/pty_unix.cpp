@@ -11,7 +11,7 @@
 // setChildProcessModifier callback runs in the child after the standard
 // descriptors have been set up and before the exec, which is the one window in
 // which the controlling terminal can be claimed.
-#include "kvitterm/pty.h"
+#include "kvitterm/pseudoterminal.h"
 
 #include <QtCore/QPointer>
 #include <QtCore/QProcess>

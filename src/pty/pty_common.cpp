@@ -1,5 +1,5 @@
 // The parts of Pty that are the same everywhere.
-#include "kvitterm/pty.h"
+#include "kvitterm/pseudoterminal.h"
 
 #include <QtCore/QFileInfo>
 #include <QtCore/QStandardPaths>

@@ -70,7 +70,9 @@ void emitScenario(const std::string &name)
     } else if (name == "progress") {
         for (int percent = 0; percent <= 100; percent += 25)
             std::printf("\rworking: %d%%", percent);
-        std::printf("\rdone      \n");
+        // Erase to the end of the line rather than padding with spaces, which
+        // is what a tool that redraws a progress line actually does.
+        std::printf("\rdone\x1b[K\n");
     } else if (name == "wide") {
         std::printf("[\xe6\x97\xa5\xe6\x9c\xac]\n");                 // two double-width ideographs
         std::printf("e\xcc\x81 = \xc3\xa9\n");                       // combining acute, then precomposed

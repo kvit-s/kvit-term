@@ -6,7 +6,7 @@
 #include <QtCore/QTemporaryDir>
 #include <QtTest/QtTest>
 
-#include "kvitterm/pty.h"
+#include "kvitterm/pseudoterminal.h"
 
 using namespace kvitterm;
 

@@ -5,9 +5,13 @@ set(KVITTERM_HEADERS
     ${PROJECT_SOURCE_DIR}/include/kvitterm/kvitterm_global.h
     ${PROJECT_SOURCE_DIR}/include/kvitterm/cell.h
     ${PROJECT_SOURCE_DIR}/include/kvitterm/palette.h
-    ${PROJECT_SOURCE_DIR}/include/kvitterm/pty.h
+    ${PROJECT_SOURCE_DIR}/include/kvitterm/pseudoterminal.h
     ${PROJECT_SOURCE_DIR}/include/kvitterm/screen.h
     ${PROJECT_SOURCE_DIR}/include/kvitterm/screenexport.h
+    ${PROJECT_SOURCE_DIR}/include/kvitterm/terminalpalette.h
+    ${PROJECT_SOURCE_DIR}/include/kvitterm/terminalsession.h
+    ${PROJECT_SOURCE_DIR}/include/kvitterm/terminalview.h
+    ${PROJECT_SOURCE_DIR}/include/kvitterm/qmlregistration.h
 )
 
 set(KVITTERM_SOURCES
@@ -19,6 +23,10 @@ set(KVITTERM_SOURCES
     core/screen.cpp
     core/screenexport.cpp
     pty/pty_common.cpp
+    quick/qmlregistration.cpp
+    quick/terminalpalette.cpp
+    quick/terminalsession.cpp
+    quick/terminalview.cpp
 )
 if(WIN32)
     list(APPEND KVITTERM_SOURCES pty/pty_windows.cpp)
@@ -35,10 +43,24 @@ target_include_directories(kvit-term
         $<INSTALL_INTERFACE:include>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
+        # Qt generates the QML type registration with `#include <header.h>`
+        # by bare file name, so the directory the headers actually live in has
+        # to be reachable that way as well as by `kvitterm/header.h`.
+        ${PROJECT_SOURCE_DIR}/include/kvitterm
 )
 target_link_libraries(kvit-term
-    PUBLIC Qt6::Core Qt6::Gui
+    PUBLIC Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick
     PRIVATE kvitterm_vterm
+)
+
+# The QML module. NO_PLUGIN because every type is registered from C++ through
+# QML_ELEMENT and the library is linked into the application directly; there
+# is no plugin for an engine to load and no .qml file to ship.
+qt_add_qml_module(kvit-term
+    URI KvitTerm
+    VERSION 1.0
+    NO_PLUGIN
+    DEPENDENCIES QtQuick
 )
 target_compile_definitions(kvit-term
     PRIVATE KVITTERM_BUILDING_LIBRARY
@@ -48,6 +70,18 @@ set_target_properties(kvit-term PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR}
 )
+
+# The pseudoconsole appeared in Windows 10 version 1809, and the SDK hides its
+# process-creation attribute behind the version macros: without these, the
+# header compiles but PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE_HANDLE is undefined.
+if(WIN32)
+    target_compile_definitions(kvit-term PRIVATE
+        _WIN32_WINNT=0x0A00
+        NTDDI_VERSION=0x0A000006      # NTDDI_WIN10_RS5
+        WIN32_LEAN_AND_MEAN
+        NOMINMAX
+    )
+endif()
 
 # openpty(3) lives in libutil on Linux and the BSDs; on macOS it is part of
 # the system library and there is nothing to link.

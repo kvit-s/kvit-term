@@ -13,7 +13,23 @@
 // QProcess builds a plain one, so this calls CreateProcessW directly. And
 // reading is done on a thread, because a pipe read here has no equivalent of
 // the socket notifier the Unix side uses.
-#include "kvitterm/pty.h"
+// The pseudoconsole appeared in Windows 10 version 1809, and the SDK hides
+// its process-creation attribute behind these version macros. The build
+// system sets them too; this is here so the file also compiles on its own.
+#if defined(NTDDI_VERSION) && NTDDI_VERSION < 0x0A000006
+#  undef NTDDI_VERSION
+#endif
+#ifndef NTDDI_VERSION
+#  define NTDDI_VERSION 0x0A000006
+#endif
+#if defined(_WIN32_WINNT) && _WIN32_WINNT < 0x0A00
+#  undef _WIN32_WINNT
+#endif
+#ifndef _WIN32_WINNT
+#  define _WIN32_WINNT 0x0A00
+#endif
+
+#include "kvitterm/pseudoterminal.h"
 
 #include <QtCore/QDir>
 #include <QtCore/QMutex>

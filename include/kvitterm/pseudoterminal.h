@@ -11,6 +11,10 @@
 //
 // There is no emulation here. The bytes that arrive are a raw terminal stream,
 // which `Screen` interprets.
+//
+// The file is named pseudoterminal.h rather than pty.h because the system's
+// own <pty.h> would otherwise be shadowed wherever this directory is on the
+// include path, which is a hard bug to read when it happens.
 #pragma once
 
 #include <QtCore/QObject>
