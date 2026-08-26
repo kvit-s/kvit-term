@@ -13,6 +13,8 @@ set(KVITTERM_HEADERS
     ${PROJECT_SOURCE_DIR}/include/kvitterm/terminalview.h
     ${PROJECT_SOURCE_DIR}/include/kvitterm/qmlregistration.h
     ${PROJECT_SOURCE_DIR}/include/kvitterm/shellintegration.h
+    ${PROJECT_SOURCE_DIR}/include/kvitterm/terminalsearch.h
+    ${PROJECT_SOURCE_DIR}/include/kvitterm/links.h
 )
 
 set(KVITTERM_SOURCES
@@ -24,7 +26,9 @@ set(KVITTERM_SOURCES
     core/screen.cpp
     core/screenexport.cpp
     pty/pty_common.cpp
+    integration/links.cpp
     integration/shellintegration.cpp
+    integration/terminalsearch.cpp
     quick/qmlregistration.cpp
     quick/terminalpalette.cpp
     quick/terminalsession.cpp
@@ -117,3 +121,52 @@ endif()
 if(UNIX AND NOT APPLE)
     target_link_libraries(kvit-term PRIVATE util)
 endif()
+
+# ── Installation.
+#
+# Two things get installed beyond the library and its headers: the vendored
+# libvterm, because a static kvit-term needs it on the consumer's link line,
+# and the shell snippets, for an application that would rather point a shell at
+# a file than write out the text the library already carries.
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
+set(KVITTERM_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/KvitTerm)
+set(KVITTERM_INSTALL_SHELLDIR ${CMAKE_INSTALL_DATADIR}/kvitterm/shell)
+
+install(TARGETS kvit-term kvitterm_vterm
+    EXPORT KvitTermTargets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/kvitterm
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    FILES_MATCHING PATTERN "*.h"
+)
+install(FILES ${KVITTERM_SHELL_SCRIPTS} DESTINATION ${KVITTERM_INSTALL_SHELLDIR})
+
+install(EXPORT KvitTermTargets
+    FILE KvitTermTargets.cmake
+    NAMESPACE KvitTerm::
+    DESTINATION ${KVITTERM_INSTALL_CMAKEDIR}
+)
+
+set(KVITTERM_MINIMUM_QT 6.10)
+configure_package_config_file(
+    ${PROJECT_SOURCE_DIR}/cmake/KvitTermConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/KvitTermConfig.cmake
+    INSTALL_DESTINATION ${KVITTERM_INSTALL_CMAKEDIR}
+    PATH_VARS KVITTERM_INSTALL_SHELLDIR
+)
+write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/KvitTermConfigVersion.cmake
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/KvitTermConfig.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/KvitTermConfigVersion.cmake
+    DESTINATION ${KVITTERM_INSTALL_CMAKEDIR}
+)

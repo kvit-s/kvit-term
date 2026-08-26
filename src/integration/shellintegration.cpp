@@ -96,7 +96,10 @@ void ShellIntegration::Private::finishCommand(int exitCode)
     ShellCommand &command = commands.last();
     command.exitCode = exitCode;
     command.finished = true;
-    command.outputLastRow = qMax(command.outputFirstRow, lastOutputRow());
+    // May be one row above the first: a command that printed nothing has no
+    // output rows at all, and the row where its output would have started now
+    // holds the next prompt.
+    command.outputLastRow = lastOutputRow();
     commandRunning = false;
     Q_EMIT q->commandsChanged();
     Q_EMIT q->commandFinished(command.text, exitCode);
@@ -265,9 +268,23 @@ QString ShellIntegration::outputOf(int index) const
     const int firstRow = command.outputFirstRow - d->linesScrolledAway;
     const int lastRow = (command.finished ? command.outputLastRow : d->lastOutputRow())
                         - d->linesScrolledAway;
+    if (lastRow < firstRow)
+        return {};                       // the command printed nothing
     if (lastRow < -screen->scrollbackCount())
-        return {};
+        return {};                       // it has scrolled out of the history
     return screen->text(qMax(firstRow, -screen->scrollbackCount()), qMin(lastRow, screen->rows() - 1));
+}
+
+int ShellIntegration::commandAtScreenRow(int screenRow) const
+{
+    const int absolute = d->absoluteRow(screenRow);
+    for (int index = int(d->commands.size()) - 1; index >= 0; --index) {
+        const ShellCommand &command = d->commands.at(index);
+        const int last = command.finished ? command.outputLastRow : d->lastOutputRow();
+        if (absolute >= command.outputFirstRow && absolute <= last)
+            return index;
+    }
+    return -1;
 }
 
 void ShellIntegration::clear()

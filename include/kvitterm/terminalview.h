@@ -16,7 +16,9 @@
 #include <QtQml/qqmlregistration.h>
 
 #include "kvitterm_global.h"
+#include "shellintegration.h"
 #include "terminalpalette.h"
+#include "terminalsearch.h"
 #include "terminalsession.h"
 
 QT_BEGIN_NAMESPACE
@@ -46,6 +48,18 @@ class KVITTERM_EXPORT TerminalView : public QQuickPaintedItem
                        NOTIFY reservedShortcutsChanged)
     Q_PROPERTY(bool hasSelection READ hasSelection NOTIFY selectionChanged)
     Q_PROPERTY(QString selectedText READ selectedText NOTIFY selectionChanged)
+    // Matches drawn on top of the screen, and the current one scrolled to.
+    Q_PROPERTY(kvitterm::TerminalSearch *search READ search WRITE setSearch NOTIFY searchChanged)
+    // Optional. With it, the view can say which command the output at the top
+    // of the window belongs to, which is what a sticky heading needs.
+    Q_PROPERTY(kvitterm::ShellIntegration *shellIntegration READ shellIntegration
+                       WRITE setShellIntegration NOTIFY shellIntegrationChanged)
+    Q_PROPERTY(QString stickyCommand READ stickyCommand NOTIFY stickyCommandChanged)
+    // The link under the pointer while a modifier is held, empty otherwise.
+    Q_PROPERTY(QString hoveredLink READ hoveredLink NOTIFY hoveredLinkChanged)
+    // The visible screen as plain text, for a screen reader. An application
+    // binds Accessible.description to it and sets Accessible.role to Terminal.
+    Q_PROPERTY(QString accessibleText READ accessibleText NOTIFY accessibleTextChanged)
 
 public:
     explicit TerminalView(QQuickItem *parent = nullptr);
@@ -66,6 +80,13 @@ public:
     void setReservedShortcuts(const QStringList &shortcuts);
     bool hasSelection() const;
     QString selectedText() const;
+    TerminalSearch *search() const;
+    void setSearch(TerminalSearch *search);
+    ShellIntegration *shellIntegration() const;
+    void setShellIntegration(ShellIntegration *integration);
+    QString stickyCommand() const;
+    QString hoveredLink() const;
+    QString accessibleText() const;
 
     Q_INVOKABLE void copy();
     Q_INVOKABLE void paste();
@@ -87,9 +108,16 @@ Q_SIGNALS:
     void gridChanged();
     void reservedShortcutsChanged();
     void selectionChanged();
-    // A link the user activated. The view finds them; what to do with one is
-    // the application's decision.
-    void linkActivated(const QString &link);
+    void searchChanged();
+    void shellIntegrationChanged();
+    void stickyCommandChanged();
+    void hoveredLinkChanged();
+    void accessibleTextChanged();
+    // A link the user activated, with the line and column that followed it
+    // where there were any, and -1 where there were not. The view finds them;
+    // what to do with one is the application's decision, since a terminal
+    // library has no business choosing an editor.
+    void linkActivated(const QString &link, int line, int character);
 
 protected:
     void geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry) override;

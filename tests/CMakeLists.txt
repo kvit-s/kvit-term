@@ -38,3 +38,5 @@ set_tests_properties(test_terminalview PROPERTIES
     RUN_SERIAL TRUE
 )
 kvitterm_unit_test(test_shellintegration)
+kvitterm_unit_test(test_links)
+kvitterm_unit_test(test_terminalsearch)

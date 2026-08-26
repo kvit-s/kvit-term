@@ -1,9 +1,11 @@
 #include "kvitterm/terminalview.h"
 
+#include "kvitterm/links.h"
 #include "kvitterm/screen.h"
 
 #include <QtCore/QTimer>
 #include <QtGui/QClipboard>
+#include <QtGui/QCursor>
 #include <QtGui/QFontDatabase>
 #include <QtGui/QFontMetricsF>
 #include <QtGui/QGuiApplication>
@@ -133,12 +135,75 @@ public:
         setSelection(QPoint(first, cell.y()), QPoint(last, cell.y()));
     }
 
+    // The link under a cell, if any. Wrapped lines are joined first, or an
+    // address split across the wrap is missed.
+    bool linkAt(const QPoint &cell, Link *found) const
+    {
+        Screen *s = screen();
+        if (!s)
+            return false;
+        int row = cell.y();
+        int offset = 0;
+        QString text = s->line(row).text();
+        // Walk back over continuations so that the whole logical line is
+        // searched, remembering how far into it this row starts.
+        int first = row;
+        while (first > -s->scrollbackCount() && s->line(first).continuation)
+            --first;
+        if (first != row) {
+            QString joined;
+            for (int r = first; r <= row; ++r) {
+                if (r == row)
+                    offset = int(joined.size());
+                joined += s->line(r).text();
+            }
+            text = joined;
+        }
+        const int column = offset + cell.x();
+        for (const Link &link : findLinks(text)) {
+            if (column >= link.column && column < link.column + link.length) {
+                *found = link;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void updateStickyCommand()
+    {
+        if (!shellIntegration) {
+            if (!stickyCommand.isEmpty()) {
+                stickyCommand.clear();
+                Q_EMIT q->stickyCommandChanged();
+            }
+            return;
+        }
+        // The command whose output is at the top of the window, but only when
+        // its own line is above it: while the command line itself is visible
+        // there is nothing to repeat.
+        const int topRow = -scrollOffset;
+        const int index = shellIntegration->commandAtScreenRow(topRow);
+        QString text;
+        if (index >= 0) {
+            const QVariantMap command = shellIntegration->commandAt(index);
+            const int firstRow = command.value(QStringLiteral("outputFirstRow")).toInt();
+            Q_UNUSED(firstRow);
+            text = command.value(QStringLiteral("text")).toString();
+        }
+        if (text == stickyCommand)
+            return;
+        stickyCommand = text;
+        Q_EMIT q->stickyCommandChanged();
+    }
+
     void noteDamage(const QRect &region)
     {
         // Backpressure: a process writing faster than the interface can draw
         // would otherwise queue an unbounded amount of work. Reading stops
         // until the next repaint, which fills the pipe and blocks the child.
         ++damageSinceLastPaint;
+        Q_EMIT q->accessibleTextChanged();
+        updateStickyCommand();
         if (session && damageSinceLastPaint > 400 && !session->isReadingSuspended())
             session->setReadingSuspended(true);
 
@@ -172,6 +237,14 @@ public:
     QPoint selectionHead;
     bool hasSelection = false;
     bool selecting = false;
+
+    TerminalSearch *search = nullptr;
+    ShellIntegration *shellIntegration = nullptr;
+    QString stickyCommand;
+    QString hoveredLink;
+    int hoveredLinkLine = -1;
+    int hoveredLinkCharacter = -1;
+    QRect hoveredLinkCells;
 
     QTimer *blinkTimer = nullptr;
     bool cursorPhase = true;
@@ -312,6 +385,60 @@ QString TerminalView::selectedText() const
     return screen->textInRange(d->selectionAnchor, d->selectionHead);
 }
 
+TerminalSearch *TerminalView::search() const { return d->search; }
+
+void TerminalView::setSearch(TerminalSearch *search)
+{
+    if (d->search == search)
+        return;
+    if (d->search)
+        d->search->disconnect(this);
+    d->search = search;
+    if (d->search) {
+        connect(d->search, &TerminalSearch::matchesChanged, this, [this] { update(); });
+        connect(d->search, &TerminalSearch::currentIndexChanged, this, [this] {
+            // Bring the current match into view, leaving a few lines of
+            // context above it rather than pinning it to the top edge.
+            if (d->search->currentIndex() < 0) {
+                update();
+                return;
+            }
+            const int row = d->search->currentRow();
+            if (row < -d->scrollOffset || row >= d->rows - d->scrollOffset)
+                setScrollOffset(-row + qMin(3, d->rows / 4));
+            update();
+        });
+    }
+    Q_EMIT searchChanged();
+    update();
+}
+
+ShellIntegration *TerminalView::shellIntegration() const { return d->shellIntegration; }
+
+void TerminalView::setShellIntegration(ShellIntegration *integration)
+{
+    if (d->shellIntegration == integration)
+        return;
+    if (d->shellIntegration)
+        d->shellIntegration->disconnect(this);
+    d->shellIntegration = integration;
+    if (d->shellIntegration) {
+        connect(d->shellIntegration, &ShellIntegration::commandsChanged, this,
+                [this] { d->updateStickyCommand(); });
+    }
+    Q_EMIT shellIntegrationChanged();
+    d->updateStickyCommand();
+}
+
+QString TerminalView::stickyCommand() const { return d->stickyCommand; }
+QString TerminalView::hoveredLink() const { return d->hoveredLink; }
+
+QString TerminalView::accessibleText() const
+{
+    Screen *screen = d->screen();
+    return screen ? screen->text(-d->scrollOffset, d->rows - 1 - d->scrollOffset) : QString();
+}
+
 void TerminalView::copy()
 {
     const QString text = selectedText();
@@ -410,6 +537,24 @@ void TerminalView::paint(QPainter *painter)
             column = end;
         }
 
+        // Search matches sit above the cell backgrounds and below the text,
+        // with the current one brighter than the rest.
+        if (d->search && d->search->matchCount() > 0) {
+            const QList<SearchMatch> found = d->search->matchesOnRow(screenRow);
+            const int currentIndex = d->search->currentIndex();
+            const int currentRow = d->search->currentRow();
+            for (const SearchMatch &match : found) {
+                const bool isCurrent = currentIndex >= 0 && match.row == currentRow
+                                       && match.column == d->search->matches()
+                                                              .at(currentIndex).column;
+                QColor highlight = colours.ansi[isCurrent ? 11 : 3];
+                highlight.setAlpha(isCurrent ? 220 : 120);
+                painter->fillRect(QRect(match.column * d->cellWidth, top,
+                                        match.length * d->cellWidth, d->cellHeight),
+                                  highlight);
+            }
+        }
+
         // Then the text, in runs of identical styling, breaking wherever a
         // character cannot be trusted to advance by exactly one cell.
         column = 0;
@@ -452,6 +597,13 @@ void TerminalView::paint(QPainter *painter)
             painter->setPen(foreground);
             painter->drawText(QPointF(column * d->cellWidth, top + d->baseline), run);
 
+            if (d->hoveredLinkCells.height() > 0 && screenRow == d->hoveredLinkCells.y()
+                && column < d->hoveredLinkCells.right() && end > d->hoveredLinkCells.left()) {
+                const int from = qMax(column, d->hoveredLinkCells.left());
+                const int to = qMin(end, d->hoveredLinkCells.right());
+                const int y = top + int(d->baseline) + 2;
+                painter->drawLine(from * d->cellWidth, y, to * d->cellWidth, y);
+            }
             if (cell.style.underline != Underline::None) {
                 const int y = top + int(d->baseline) + 2;
                 painter->drawLine(column * d->cellWidth, y, end * d->cellWidth, y);
@@ -587,6 +739,15 @@ void TerminalView::mousePressEvent(QMouseEvent *event)
         return;
     }
 
+    if (event->button() == Qt::LeftButton && event->modifiers().testFlag(Qt::ControlModifier)) {
+        Link found;
+        if (d->linkAt(cell, &found)) {
+            Q_EMIT linkActivated(found.text, found.line, found.character);
+            event->accept();
+            return;
+        }
+    }
+
     clearSelection();
     d->selecting = true;
     d->setSelection(cell, cell);
@@ -655,9 +816,41 @@ void TerminalView::mouseDoubleClickEvent(QMouseEvent *event)
 void TerminalView::hoverMoveEvent(QHoverEvent *event)
 {
     Screen *screen = d->screen();
-    if (screen && screen->mouseTracking() == MouseTracking::Motion) {
+    if (!screen) {
+        event->ignore();
+        return;
+    }
+    if (screen->mouseTracking() == MouseTracking::Motion) {
         const QPoint cell = d->cellAt(event->position());
         screen->mouseMove(cell.y(), cell.x(), event->modifiers());
+    }
+
+    // Links light up only while the modifier that activates them is held, so
+    // that ordinary output does not turn into a field of underlines.
+    QString link;
+    QRect cells;
+    int line = -1;
+    int character = -1;
+    if (event->modifiers().testFlag(Qt::ControlModifier)) {
+        const QPoint cell = d->cellAt(event->position());
+        Link found;
+        if (d->linkAt(cell, &found)) {
+            link = found.text;
+            line = found.line;
+            character = found.character;
+            // The match is in the joined logical line; place the underline on
+            // the row under the pointer, which is the row the user sees.
+            cells = QRect(cell.x() - 1, cell.y(), found.length + 2, 1);
+        }
+    }
+    if (link != d->hoveredLink) {
+        d->hoveredLink = link;
+        d->hoveredLinkLine = line;
+        d->hoveredLinkCharacter = character;
+        d->hoveredLinkCells = cells;
+        setCursor(QCursor(link.isEmpty() ? Qt::IBeamCursor : Qt::PointingHandCursor));
+        Q_EMIT hoveredLinkChanged();
+        update();
     }
     event->ignore();
 }

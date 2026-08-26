@@ -30,8 +30,12 @@ add_library(kvitterm_vterm STATIC
     libvterm/src/unicode.c
     libvterm/src/vterm.c
 )
+# The headers are needed to build this library and by nothing else: kvit-term's
+# own public headers expose none of libvterm's types. Hence BUILD_INTERFACE
+# alone, which is also what lets the target be exported without installing a
+# copy of libvterm's headers.
 target_include_directories(kvitterm_vterm
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/libvterm/include
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libvterm/include>
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libvterm/src
 )
 set_target_properties(kvitterm_vterm PROPERTIES

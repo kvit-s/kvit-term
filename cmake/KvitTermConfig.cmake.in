@@ -1,0 +1,13 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+find_dependency(Qt6 @KVITTERM_MINIMUM_QT@ COMPONENTS Core Gui Qml Quick)
+
+include("${CMAKE_CURRENT_LIST_DIR}/KvitTermTargets.cmake")
+
+check_required_components(KvitTerm)
+
+# Where the shell integration snippets were installed, for an application that
+# would rather point a shell at the file than write out the text the library
+# carries. Either works; the text is the same.
+set(KVITTERM_SHELL_SCRIPT_DIR "@PACKAGE_KVITTERM_INSTALL_SHELLDIR@")

@@ -80,6 +80,9 @@ public:
     // The output of a command that has finished, as text. This is the thing a
     // scrollback buffer alone cannot give: the bytes between two marks.
     Q_INVOKABLE QString outputOf(int index) const;
+    // Which command the given row of the screen belongs to, or -1. Rows are
+    // numbered as Screen numbers them, so negative rows are the scrollback.
+    Q_INVOKABLE int commandAtScreenRow(int screenRow) const;
     Q_INVOKABLE void clear();
 
 Q_SIGNALS:

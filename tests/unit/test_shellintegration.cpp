@@ -5,7 +5,11 @@
 // startup files do all vary, and none of that is what these cases are about.
 // One case at the end runs the whole path through a pseudo-terminal.
 #include <QtCore/QFileInfo>
+#include <QtCore/QStandardPaths>
+#include <QtCore/QTemporaryDir>
 #include <QtTest/QtTest>
+
+#include <QtCore/QFile>
 
 #include "kvitterm/shellintegration.h"
 #include "kvitterm/terminalsession.h"
@@ -110,6 +114,22 @@ private Q_SLOTS:
         QVERIFY(second.contains(QStringLiteral("two")));
     }
 
+    void aCommandThatPrintedNothingHasNoOutput()
+    {
+        // The row where its output would have started holds the next prompt
+        // by the time anybody asks, so reporting that row would attribute the
+        // prompt to the command.
+        QObject owner;
+        auto *session = new TerminalSession(&owner);
+        session->setAutoStart(false);
+        ShellIntegration integration;
+        integration.setSession(session);
+
+        session->screen()->feed(promptAndCommand("true", QByteArray(), 0));
+        session->screen()->feed("\x1b]133;A\x1b\\$ ");
+        QVERIFY(integration.outputOf(0).isEmpty());
+    }
+
     void theDirectoryTheShellIsInIsReported()
     {
         QObject owner;
@@ -181,6 +201,66 @@ private Q_SLOTS:
             QVERIFY(script.contains(QStringLiteral("133;D")));
         }
     }
+
+#ifndef Q_OS_WIN
+    void theBashSnippetWorksInARealShell()
+    {
+        // The one case here that depends on a program the machine may not
+        // have, and the only way to prove that the snippet this library ships
+        // does what the rest of the suite assumes. Bash is started with an
+        // init file of our own, so the person running the tests keeps their
+        // configuration and this keeps its determinism.
+        const QString bash = QStandardPaths::findExecutable(QStringLiteral("bash"));
+        if (bash.isEmpty())
+            QSKIP("bash is not installed");
+
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        const QString snippetPath = directory.filePath(QStringLiteral("kvitterm.bash"));
+        QFile snippet(snippetPath);
+        QVERIFY(snippet.open(QIODevice::WriteOnly));
+        snippet.write(shellIntegrationScript(Shell::Bash).toUtf8());
+        snippet.close();
+
+        const QString initPath = directory.filePath(QStringLiteral("init.bash"));
+        QFile init(initPath);
+        QVERIFY(init.open(QIODevice::WriteOnly));
+        init.write(QStringLiteral("PS1='$ '\n. %1\n").arg(snippetPath).toUtf8());
+        init.close();
+
+        QObject owner;
+        auto *session = new TerminalSession(&owner);
+        session->setAutoStart(false);
+        session->setProgram(bash);
+        session->setArguments({QStringLiteral("--rcfile"), initPath, QStringLiteral("-i")});
+        session->setWorkingDirectory(directory.path());
+        ShellIntegration integration;
+        integration.setSession(session);
+        QVERIFY(session->start());
+
+        QTRY_VERIFY_WITH_TIMEOUT(integration.isActive(), 10000);
+        session->sendText(QStringLiteral("echo one\r"));
+        QTRY_VERIFY_WITH_TIMEOUT(integration.commandCount() >= 1, 10000);
+        QTRY_VERIFY_WITH_TIMEOUT(
+            integration.commandAt(0).value(QStringLiteral("finished")).toBool(), 10000);
+
+        QCOMPARE(integration.commandAt(0).value(QStringLiteral("text")).toString(),
+                 QStringLiteral("echo one"));
+        QCOMPARE(integration.commandAt(0).value(QStringLiteral("exitCode")).toInt(), 0);
+        QVERIFY(integration.outputOf(0).contains(QStringLiteral("one")));
+
+        // A failing command, and the directory the shell reports.
+        session->sendText(QStringLiteral("false\r"));
+        QTRY_VERIFY_WITH_TIMEOUT(integration.commandCount() >= 2, 10000);
+        QTRY_VERIFY_WITH_TIMEOUT(
+            integration.commandAt(1).value(QStringLiteral("finished")).toBool(), 10000);
+        QCOMPARE(integration.commandAt(1).value(QStringLiteral("exitCode")).toInt(), 1);
+        QVERIFY(integration.outputOf(1).isEmpty());
+        QVERIFY(!integration.currentDirectory().isEmpty());
+
+        session->close();
+    }
+#endif
 
     void theMarksSurviveARealPseudoTerminal()
     {
