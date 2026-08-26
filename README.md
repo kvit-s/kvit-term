@@ -1,5 +1,7 @@
 # kvit-term
 
+[![build and test](https://github.com/kvit-s/kvit-term/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/kvit-s/kvit-term/actions/workflows/ci.yml)
+
 A terminal emulator for Qt Quick applications, delivered as an embeddable
 library: a pseudo-terminal layer for Linux, macOS and Windows, a screen and
 scrollback model, and a `QQuickItem` that draws it and handles keyboard,
