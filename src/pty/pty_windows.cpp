@@ -38,6 +38,8 @@
 #include <QtCore/QWinEventNotifier>
 
 #include <atomic>
+#include <cstdarg>
+#include <cstdio>
 
 #ifndef WIN32_LEAN_AND_MEAN
 #  define WIN32_LEAN_AND_MEAN
@@ -82,6 +84,28 @@ QString quoteArgument(const QString &argument)
     quoted += QString(backslashes * 2, QLatin1Char('\\'));
     quoted += QLatin1Char('"');
     return quoted;
+}
+
+// Set KVITTERM_PTY_DEBUG to have every step of the attachment report itself.
+// Written straight to the unbuffered standard error rather than through
+// qWarning, so that it survives a process that dies before it flushes.
+bool debugging()
+{
+    static const bool on = qEnvironmentVariableIsSet("KVITTERM_PTY_DEBUG");
+    return on;
+}
+
+void report(const char *format, ...)
+{
+    if (!debugging())
+        return;
+    va_list arguments;
+    va_start(arguments, format);
+    std::fprintf(stderr, "[kvitterm pty] ");
+    std::vfprintf(stderr, format, arguments);
+    std::fprintf(stderr, "\n");
+    std::fflush(stderr);
+    va_end(arguments);
 }
 
 QString formatLastError(DWORD code)
@@ -131,6 +155,12 @@ public:
 protected:
     void run() override
     {
+        // Waiting for data with PeekNamedPipe rather than blocking in
+        // ReadFile. A blocked read cannot be cancelled from another thread
+        // without a handle to this one, so ending a session would mean either
+        // hanging until the child wrote something or killing a thread in the
+        // middle of a read; polling every few milliseconds costs nothing
+        // measurable and makes shutdown ordinary.
         QVarLengthArray<char, 65536> buffer(65536);
         for (;;) {
             {
@@ -141,9 +171,18 @@ protected:
             if (m_stopping.load())
                 return;
 
+            DWORD available = 0;
+            if (!PeekNamedPipe(m_pipe, nullptr, 0, nullptr, &available, nullptr))
+                return;                       // the pseudoconsole has gone
+            if (available == 0) {
+                QThread::msleep(4);
+                continue;
+            }
+
             DWORD got = 0;
-            if (!ReadFile(m_pipe, buffer.data(), DWORD(buffer.size()), &got, nullptr) || got == 0)
-                return;                       // the pseudoconsole closed
+            const DWORD wanted = qMin<DWORD>(available, DWORD(buffer.size()));
+            if (!ReadFile(m_pipe, buffer.data(), wanted, &got, nullptr) || got == 0)
+                return;
 
             const QByteArray bytes(buffer.constData(), qsizetype(got));
             Pty *owner = m_owner;
@@ -169,19 +208,23 @@ public:
 
     void closeHandles()
     {
+        // The reader goes first and is joined before anything it touches is
+        // closed: it polls, so it notices the stop within a few milliseconds.
         if (reader) {
             reader->stop();
-            // The read blocks until the pseudoconsole is gone, which is what
-            // closing it below achieves; wait afterwards.
+            if (!reader->wait(3000)) {
+                // It cannot be deleted while it runs, and killing a thread is
+                // worse than leaking one on a path this rare.
+                report("the reader thread did not stop; leaving it behind");
+                reader->setParent(nullptr);
+            } else {
+                delete reader;
+            }
+            reader = nullptr;
         }
         if (pseudoConsole) {
             ClosePseudoConsole(pseudoConsole);
             pseudoConsole = nullptr;
-        }
-        if (reader) {
-            reader->wait(2000);
-            delete reader;
-            reader = nullptr;
         }
         if (inputWrite != INVALID_HANDLE_VALUE) {
             CloseHandle(inputWrite);
@@ -263,8 +306,12 @@ bool Pty::start(const Pty::Params &params, QString *error)
                         .arg(formatLastError(GetLastError())));
     }
 
+    report("parent stdout is file type %lu", (unsigned long) GetFileType(GetStdHandle(STD_OUTPUT_HANDLE)));
+
     const COORD size = {SHORT(d->columns), SHORT(d->rows)};
     HRESULT created = CreatePseudoConsole(size, inputRead, outputWrite, 0, &d->pseudoConsole);
+    report("CreatePseudoConsole(%d x %d) = 0x%08lx, handle %p", int(size.X), int(size.Y),
+           (unsigned long) created, (void *) d->pseudoConsole);
     // The console host duplicates both handles, so this end has no further
     // use for them whether it succeeded or not.
     CloseHandle(inputRead);
@@ -276,12 +323,15 @@ bool Pty::start(const Pty::Params &params, QString *error)
 
     SIZE_T attributeSize = 0;
     InitializeProcThreadAttributeList(nullptr, 1, 0, &attributeSize);
+    report("attribute list wants %llu bytes", (unsigned long long) attributeSize);
     d->attributeList = static_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(malloc(attributeSize));
     if (!d->attributeList
         || !InitializeProcThreadAttributeList(d->attributeList, 1, 0, &attributeSize)) {
         return fail(QStringLiteral("Could not prepare the process attributes: %1")
                         .arg(formatLastError(GetLastError())));
     }
+    report("attaching pseudoconsole %p as attribute 0x%llx", (void *) d->pseudoConsole,
+           (unsigned long long) PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE);
     if (!UpdateProcThreadAttribute(d->attributeList, 0, PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE,
                                    d->pseudoConsole, sizeof(d->pseudoConsole), nullptr, nullptr)) {
         return fail(QStringLiteral("Could not attach the pseudoconsole to the child: %1")
@@ -333,6 +383,10 @@ bool Pty::start(const Pty::Params &params, QString *error)
         return fail(QStringLiteral("Could not start %1: %2")
                         .arg(params.program, formatLastError(GetLastError())));
     }
+
+    report("started %s as process %lu, startup size %llu, attribute list %p",
+           qPrintable(params.program), (unsigned long) d->processInfo.dwProcessId,
+           (unsigned long long) startup.StartupInfo.cb, (void *) startup.lpAttributeList);
 
     d->running = true;
     d->exitNotifier = new QWinEventNotifier(d->processInfo.hProcess, this);

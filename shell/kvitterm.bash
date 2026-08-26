@@ -29,6 +29,9 @@ __kvitterm_prompt_command() {
     __kvitterm_osc "133;D;${status}"
     __kvitterm_osc "7;file://${HOSTNAME:-localhost}${PWD}"
     __kvitterm_osc "133;A"
+    # Only meaningful on the bash 3.2 path below, where it says the next
+    # command to run is one the user typed at this prompt.
+    __kvitterm_at_prompt=1
     return $status
 }
 
@@ -46,6 +49,36 @@ case "${PS1}" in
     *) PS1="${PS1}\[$(printf '\033]133;B\007')\]" ;;
 esac
 
-# Emitted after the command is read and before it runs, which is where its
-# output starts.
-PS0="${PS0:-}$(printf '\033]133;C\007')"
+# The start of a command's output, emitted after the line has been read and
+# before it runs.
+#
+# PS0 is the natural place for it and exists only in bash 4.4 and later, which
+# leaves out the bash 3.2 that macOS still ships. There, a DEBUG trap fires
+# before every simple command instead, and a flag set when the prompt is drawn
+# keeps it to one mark per command line rather than one per command in it.
+__kvitterm_supports_ps0() {
+    [ -n "${BASH_VERSINFO:-}" ] || return 1
+    [ "${BASH_VERSINFO[0]}" -gt 4 ] && return 0
+    [ "${BASH_VERSINFO[0]}" -eq 4 ] && [ "${BASH_VERSINFO[1]}" -ge 4 ]
+}
+
+if __kvitterm_supports_ps0; then
+    PS0="${PS0:-}$(printf '\033]133;C\007')"
+else
+    __kvitterm_at_prompt=0
+
+    __kvitterm_debug_trap() {
+        # Completion runs commands too, and so does the prompt command
+        # itself; neither is a command the user typed.
+        [ -n "${COMP_LINE:-}" ] && return
+        case "$BASH_COMMAND" in
+            __kvitterm_*) return ;;
+        esac
+        if [ "$__kvitterm_at_prompt" = 1 ]; then
+            __kvitterm_at_prompt=0
+            __kvitterm_osc "133;C"
+        fi
+    }
+
+    trap '__kvitterm_debug_trap' DEBUG
+fi

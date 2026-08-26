@@ -60,6 +60,9 @@ jobs:
       - name: test
         env:
           QT_QPA_PLATFORM: offscreen
+          # Makes the Windows pseudoconsole report each step of attaching
+          # itself to the child, which is the only view of it from here.
+          KVITTERM_PTY_DEBUG: "1"
         run: ctest --test-dir build --build-config RelWithDebInfo --output-on-failure
 
       # Nothing in the library's own build exercises the installed package:
