@@ -362,6 +362,26 @@ bool Pty::start(const Pty::Params &params, QString *error)
     startup.StartupInfo.cb = sizeof(STARTUPINFOEXW);
     startup.lpAttributeList = d->attributeList;
 
+    // Empty standard handles, deliberately.
+    //
+    // Without this, whatever standard handles this process happens to have
+    // are copied into the child's process parameters, and they take
+    // precedence over the ones the pseudoconsole would install. When the
+    // parent's handles are a console that is invisible; when they are pipes —
+    // which is what any redirected parent has, a test runner included — the
+    // child writes to the parent's pipe instead of to the terminal, reports
+    // that it is not on a terminal at all, and turns its colours off.
+    // Declaring them empty leaves console initialisation to fill them in from
+    // the pseudoconsole.
+    startup.StartupInfo.dwFlags = STARTF_USESTDHANDLES;
+    startup.StartupInfo.hStdInput = nullptr;
+    startup.StartupInfo.hStdOutput = nullptr;
+    startup.StartupInfo.hStdError = nullptr;
+
+    report("parent standard handles in %p out %p err %p",
+           (void *) GetStdHandle(STD_INPUT_HANDLE), (void *) GetStdHandle(STD_OUTPUT_HANDLE),
+           (void *) GetStdHandle(STD_ERROR_HANDLE));
+
     QVarLengthArray<wchar_t, 512> commandLineBuffer(commandLine.size() + 1);
     commandLine.toWCharArray(commandLineBuffer.data());
     commandLineBuffer[commandLine.size()] = L'\0';

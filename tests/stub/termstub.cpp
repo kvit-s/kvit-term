@@ -116,6 +116,9 @@ int main(int argc, char **argv)
         // attached and it inherited the parent's handles instead.
         std::printf("stdout-type %lu\n",
                     (unsigned long) GetFileType(GetStdHandle(STD_OUTPUT_HANDLE)));
+        // The handle values themselves, so that a child writing to the
+        // parent's pipe can be told from one writing to its own terminal.
+        std::printf("stdout-handle %p\n", (void *) GetStdHandle(STD_OUTPUT_HANDLE));
 #endif
         std::fflush(stdout);
         return 0;
