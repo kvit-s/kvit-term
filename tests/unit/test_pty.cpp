@@ -43,6 +43,50 @@ private:
 
     QByteArray m_lastOutput;
 
+    // The text a child wrote, with the terminal's own escape sequences taken
+    // out.
+    //
+    // What arrives on a pseudo-terminal is not the child's bytes alone.
+    // Windows' console host in particular announces itself first — it hides
+    // the cursor, clears the screen, sets the window title from the program's
+    // path and shows the cursor again — and it emits those sequences
+    // *between* the child's characters, so that a line the child printed in
+    // one call arrives split around them. Interpreting the stream is the
+    // emulator's job and it has a suite of its own; here it is enough to
+    // remove what the child did not write.
+    static QByteArray plainText(const QByteArray &stream)
+    {
+        QByteArray text;
+        for (int index = 0; index < stream.size(); ++index) {
+            const char byte = stream.at(index);
+            if (byte != '\x1b') {
+                text += byte;
+                continue;
+            }
+            if (index + 1 >= stream.size())
+                break;
+            const char kind = stream.at(index + 1);
+            if (kind == '[') {                       // a control sequence, ended by a letter
+                index += 2;
+                while (index < stream.size() && !QChar::isLetter(uchar(stream.at(index))))
+                    ++index;
+            } else if (kind == ']') {                // an operating-system command
+                index += 2;
+                while (index < stream.size() && stream.at(index) != '\a') {
+                    if (stream.at(index) == '\x1b' && index + 1 < stream.size()
+                        && stream.at(index + 1) == '\\') {
+                        ++index;
+                        break;
+                    }
+                    ++index;
+                }
+            } else {
+                ++index;                             // a two-character escape
+            }
+        }
+        return text;
+    }
+
     static Pty::Params stubParams(const QStringList &arguments, int columns = 80, int rows = 24)
     {
         Pty::Params params;
@@ -102,8 +146,8 @@ private Q_SLOTS:
         QVERIFY2(session.pty.start(stubParams({QStringLiteral("isatty")}), &error),
                  qPrintable(error));
         QTRY_VERIFY(session.finished);
-        QVERIFY2(session.output.contains("stdin 1 stdout 1 stderr 1"),
-                 "the child did not see a terminal; " + session.output.trimmed());
+        QVERIFY2(plainText(session.output).contains("stdin 1 stdout 1 stderr 1"),
+                 "the child did not see a terminal; " + plainText(session.output).trimmed());
         QCOMPARE(session.exitCode, 0);
     }
 
@@ -113,7 +157,8 @@ private Q_SLOTS:
         collect(session);
         QVERIFY(session.pty.start(stubParams({QStringLiteral("size")}, 100, 30)));
         QTRY_VERIFY(session.finished);
-        QCOMPARE(session.output.trimmed(), QByteArray("size 100x30"));
+        QVERIFY2(plainText(session.output).contains("size 100x30"),
+                 plainText(session.output).trimmed());
     }
 
 #ifndef Q_OS_WIN
@@ -124,9 +169,9 @@ private Q_SLOTS:
         Session session;
         collect(session);
         QVERIFY(session.pty.start(stubParams({QStringLiteral("size-watch")}, 80, 24)));
-        QTRY_VERIFY(session.output.contains("size 80x24"));
+        QTRY_VERIFY(plainText(session.output).contains("size 80x24"));
         session.pty.resize(120, 40);
-        QTRY_VERIFY(session.output.contains("size 120x40"));
+        QTRY_VERIFY(plainText(session.output).contains("size 120x40"));
         QTRY_VERIFY(session.finished);
     }
 #endif
@@ -141,7 +186,7 @@ private Q_SLOTS:
         // program. Sending a newline works on Unix, where the conversion runs
         // in both directions, and leaves a Windows console waiting.
         session.pty.write(QByteArray("hello\r"));
-        QTRY_VERIFY(session.output.contains("echo:hello"));
+        QTRY_VERIFY(plainText(session.output).contains("echo:hello"));
         // The terminal's own line discipline echoed the input back as well,
         // which is what makes typing visible in a real terminal.
         QVERIFY(session.output.contains("hello\r\n"));
@@ -167,7 +212,7 @@ private Q_SLOTS:
         collect(session);
         QVERIFY(session.pty.start(stubParams({QStringLiteral("scenario"), QStringLiteral("colour")})));
         QTRY_VERIFY(session.finished);
-        QVERIFY(session.output.contains("truecolour"));
+        QVERIFY(plainText(session.output).contains("truecolour"));
     }
 
     void aProgramThatDoesNotExistFailsToStart()
@@ -218,7 +263,7 @@ private Q_SLOTS:
         QTest::qWait(200);
         QVERIFY(session.output.isEmpty());
         session.pty.setReadingSuspended(false);
-        QTRY_VERIFY(session.output.contains("line 50"));
+        QTRY_VERIFY(plainText(session.output).contains("line 50"));
     }
 };
 
