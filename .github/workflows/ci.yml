@@ -1,0 +1,63 @@
+# Builds and tests on the three platforms the library claims to support.
+#
+# Windows is here from the first commit on purpose: its pseudo-terminal is a
+# different mechanism with different timing, and it is where a terminal bug
+# appears first. A Windows job added late is a week of archaeology; added
+# early it is a job that fails the moment something breaks.
+name: build and test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux
+            os: ubuntu-latest
+          - name: macos
+            os: macos-latest
+          - name: windows
+            os: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Qt's own offscreen platform plugin still links against the system's
+      # graphics and input libraries, so a headless runner needs them present
+      # even though no window is ever opened.
+      - name: install the libraries Qt needs on Linux
+        if: matrix.name == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-dev libxkbcommon-dev libxkbcommon-x11-0 \
+            libx11-xcb1 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
+            libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 \
+            libxcb-xkb1 libegl1
+
+      - name: install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.10.1'
+          cache: true
+
+      - name: configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
+
+      - name: build
+        run: cmake --build build --config RelWithDebInfo --parallel
+
+      # Serially, and offscreen. Qt Quick tests that want a surface interfere
+      # with each other when run in parallel, which produces failure counts
+      # that swing from run to run and cannot be used to judge a change.
+      - name: test
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: ctest --test-dir build --build-config RelWithDebInfo --output-on-failure
