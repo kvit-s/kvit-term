@@ -104,6 +104,45 @@ private Q_SLOTS:
         QVERIFY(html.contains(QStringLiteral("#787878")) || html.contains(QStringLiteral("span")));
     }
 
+    void activityFollowsTheScreenAndEndsAfterTheQuietPeriod()
+    {
+        QObject owner;
+        TerminalSession *session = stubSession(&owner, {QStringLiteral("echo")});
+        // Shorter than the default second, so the test does not wait one.
+        session->setActivityPeriod(200);
+        QSignalSpy starts(session, &TerminalSession::activityStarted);
+        QSignalSpy ends(session, &TerminalSession::activityEnded);
+        QVERIFY(session->start());
+        QVERIFY(!session->hasActivity());
+
+        session->sendText(QStringLiteral("hello\r"));
+        QTRY_VERIFY(session->hasActivity());
+        QCOMPARE(starts.count(), 1);
+        QVERIFY(ends.isEmpty());
+
+        QTRY_VERIFY(!session->hasActivity());
+        QCOMPARE(ends.count(), 1);
+        QVERIFY(session->screenText().contains(QStringLiteral("echo:hello")));
+
+        // A second command is a second activity, not a continuation of the
+        // first.
+        session->sendText(QStringLiteral("again\r"));
+        QTRY_COMPARE(starts.count(), 2);
+    }
+
+    void aTerminalNobodyIsUsingReportsNoActivity()
+    {
+        QObject owner;
+        TerminalSession *session = stubSession(&owner, {QStringLiteral("sleep")});
+        session->setActivityPeriod(200);
+        QSignalSpy starts(session, &TerminalSession::activityStarted);
+        QVERIFY(session->start());
+        QTest::qWait(400);
+        QVERIFY(!session->hasActivity());
+        QVERIFY(starts.isEmpty());
+        session->close();
+    }
+
     void closingTheSessionEndsTheChild()
     {
         QObject owner;

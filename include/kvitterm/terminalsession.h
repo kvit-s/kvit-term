@@ -41,6 +41,18 @@ class KVITTERM_EXPORT TerminalSession : public QObject, public QQmlParserStatus
     Q_PROPERTY(int columns READ columns NOTIFY sizeChanged)
     Q_PROPERTY(int rows READ rows NOTIFY sizeChanged)
     Q_PROPERTY(int scrollbackCount READ scrollbackCount NOTIFY contentChanged)
+    // True while the terminal is changing. Anything that alters what the
+    // screen shows turns it on — output from the child, a line scrolling off,
+    // the cursor moving, a new title — and it turns off again once nothing has
+    // changed for `activityPeriod` milliseconds. This is what an application
+    // binds to in order to show that a background terminal is doing something.
+    Q_PROPERTY(bool activity READ hasActivity NOTIFY activityChanged)
+    // How long the screen has to stay unchanged before the activity counts as
+    // over, in milliseconds. One second by default, which is long enough that
+    // a program printing a line at a time reads as one continuous activity and
+    // short enough that a finished command stops looking busy.
+    Q_PROPERTY(int activityPeriod READ activityPeriod WRITE setActivityPeriod
+                       NOTIFY activityPeriodChanged)
 
 public:
     explicit TerminalSession(QObject *parent = nullptr);
@@ -64,6 +76,9 @@ public:
     int columns() const;
     int rows() const;
     int scrollbackCount() const;
+    bool hasActivity() const;
+    int activityPeriod() const;
+    void setActivityPeriod(int milliseconds);
 
     // The screen this session is drawing onto. A view reads it; most
     // applications never need it.
@@ -109,6 +124,12 @@ Q_SIGNALS:
     void titleChanged();
     void sizeChanged();
     void contentChanged();
+    void activityChanged();
+    void activityPeriodChanged();
+    // The two edges of the same property, for an application that wants to act
+    // on the change rather than bind to the state.
+    void activityStarted();
+    void activityEnded();
     void started();
     void exited(int exitCode);
     void failed(const QString &message);

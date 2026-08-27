@@ -4,6 +4,7 @@
 #include "kvitterm/screenexport.h"
 
 #include <QtCore/QProcessEnvironment>
+#include <QtCore/QTimer>
 
 namespace kvitterm {
 
@@ -19,6 +20,9 @@ public:
     bool autoStart = true;
     bool complete = false;
     bool startedOnce = false;
+    // Nothing has changed for this long, and the terminal is quiet again.
+    QTimer activityTimer;
+    bool activity = false;
 };
 
 TerminalSession::TerminalSession(QObject *parent) : QObject(parent), d(new Private)
@@ -41,6 +45,31 @@ TerminalSession::TerminalSession(QObject *parent) : QObject(parent), d(new Priva
         Q_EMIT exited(exitCode);
     });
     connect(&d->pty, &Pty::failed, this, &TerminalSession::failed);
+
+    // Activity means the screen changed, so it is taken from the screen rather
+    // than from the child's bytes: some of what a child writes — a query, a
+    // mode change — alters nothing on the display, and a resize or a clear
+    // alters it with the child writing nothing at all.
+    d->activityTimer.setSingleShot(true);
+    d->activityTimer.setInterval(1000);
+    connect(&d->activityTimer, &QTimer::timeout, this, [this] {
+        d->activity = false;
+        Q_EMIT activityChanged();
+        Q_EMIT activityEnded();
+    });
+    const auto noteActivity = [this] {
+        d->activityTimer.start();
+        if (d->activity)
+            return;
+        d->activity = true;
+        Q_EMIT activityChanged();
+        Q_EMIT activityStarted();
+    };
+    connect(d->screen, &Screen::damaged, this, noteActivity);
+    connect(d->screen, &Screen::scrolled, this, noteActivity);
+    connect(d->screen, &Screen::cursorMoved, this, noteActivity);
+    connect(d->screen, &Screen::titleChanged, this, noteActivity);
+    connect(d->screen, &Screen::scrollbackCleared, this, noteActivity);
 }
 
 TerminalSession::~TerminalSession()
@@ -113,6 +142,20 @@ QString TerminalSession::title() const { return d->screen->title(); }
 int TerminalSession::columns() const { return d->screen->columns(); }
 int TerminalSession::rows() const { return d->screen->rows(); }
 int TerminalSession::scrollbackCount() const { return d->screen->scrollbackCount(); }
+bool TerminalSession::hasActivity() const { return d->activity; }
+int TerminalSession::activityPeriod() const { return d->activityTimer.interval(); }
+
+void TerminalSession::setActivityPeriod(int milliseconds)
+{
+    milliseconds = qMax(0, milliseconds);
+    if (d->activityTimer.interval() == milliseconds)
+        return;
+    // A running timer takes the new period from where it is now, which is what
+    // an application changing the period mid-command would expect.
+    d->activityTimer.setInterval(milliseconds);
+    Q_EMIT activityPeriodChanged();
+}
+
 Screen *TerminalSession::screen() const { return d->screen; }
 
 bool TerminalSession::start()

@@ -103,6 +103,33 @@ This is how an application shows a build log with its colours and its
 carriage-return redraws applied without having a terminal in its interface: run
 the command on a session, and put the exported HTML in an ordinary text view.
 
+## Telling whether a terminal is doing something
+
+`session.activity` is true while the screen is changing and false once it has
+been still for `session.activityPeriod` milliseconds — one second by default.
+Anything that alters the display counts: output from the child, a line
+scrolling off, the cursor moving, the program setting a new title. A terminal
+sitting at a prompt reports nothing.
+
+```qml
+TerminalSession {
+    id: session
+    activityPeriod: 2000                      // milliseconds of stillness
+    onActivityStarted: tab.indicator.show()
+    onActivityEnded: if (!tab.visible) notify("build finished")
+}
+
+Rectangle { visible: session.activity }       // or bind to the property
+```
+
+The two signals are the edges of that same property, for an application that
+would rather act on the change than bind to the state.
+
+This is a different question from which command is running, which needs the
+shell's own marks; see below. Use `activity` for "is anything happening in
+there", which is what an unfocused tab or a background terminal needs, and use
+the shell integration when the answer has to be a command and an exit code.
+
 ## Shell integration
 
 A terminal on its own cannot say where one command ended and the next began,
