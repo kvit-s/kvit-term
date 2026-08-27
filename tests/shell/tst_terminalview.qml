@@ -96,6 +96,20 @@ Item {
             compare(view.scrollOffset, 0)
         }
 
+        function test_aBlinkingCursorIsNotActivity() {
+            // The blink is the view repainting one cell on a timer of its
+            // own. It never reaches the emulator, so a shell waiting at a
+            // prompt must not look busy.
+            session.arguments = ["sleep"]
+            session.activityPeriod = 200
+            verify(session.start())
+            view.forceActiveFocus()
+            verify(view.activeFocus)       // the blink runs only while focused
+            wait(700)                      // more than one blink interval
+            verify(!session.activity)
+            session.close()
+        }
+
         function test_aReservedShortcutIsNotConsumed() {
             // The application asked for this one, so the item must not treat
             // it as its own and must not send it to the child either.
