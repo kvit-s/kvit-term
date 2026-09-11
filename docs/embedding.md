@@ -59,9 +59,22 @@ size at startup and a program that draws a full screen uses it immediately.
 
 The view computes columns and rows from its own geometry and the font's cell
 size, and tells the session, which tells the child. An application therefore
-sizes the item and nothing else. A terminal wants a monospaced font: the
-default is the platform's own fixed-width font, and a proportional one will
-draw a ragged grid rather than fail.
+sizes the item and nothing else.
+
+## The font
+
+The default is the platform's own fixed-width font, so a view nobody
+configures is already a terminal. A family named in QML is used as asked for
+where the machine has it, and falls back to another fixed-width font where it
+does not — which is the usual case rather than the odd one, since an
+application cannot know that "JetBrains Mono" is installed, and `monospace` is
+a fontconfig alias that exists on Linux and nowhere else. Without that
+fallback Qt would substitute the proportional interface font.
+
+A proportional font an application asks for by name is drawn as asked. Each
+cell is then positioned individually rather than a run at a time, so the grid
+still holds and a space still occupies a column; the text is simply spread out,
+since the columns are as wide as the widest character the font draws.
 
 ## Who owns which keystroke
 

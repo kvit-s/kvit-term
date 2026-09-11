@@ -48,15 +48,32 @@ public:
     void recomputeMetrics()
     {
         const QFontMetricsF metrics(font);
+
+        // Whether every character advances by the same amount, which is what
+        // the run drawing below assumes. It is not something the view can
+        // take for granted: a family the platform does not have falls back to
+        // the interface font, which is proportional, and an application is
+        // free to ask for a proportional family outright.
+        const qreal naturalAdvance = metrics.horizontalAdvance(QLatin1Char('M'));
+        qreal widestAdvance = naturalAdvance;
+        uniformAdvance = true;
+        for (char probe = ' '; probe <= '~'; ++probe) {
+            const qreal advance = metrics.horizontalAdvance(QLatin1Char(probe));
+            widestAdvance = qMax(widestAdvance, advance);
+            if (qAbs(advance - naturalAdvance) > 0.01)
+                uniformAdvance = false;
+        }
+
         // Integers, so that a column always lands on the same pixel: at
         // fractional widths the hundredth column is half a pixel off and the
-        // grid visibly shears.
-        const qreal naturalAdvance = metrics.horizontalAdvance(QLatin1Char('M'));
-        cellWidth = qMax(1, qRound(naturalAdvance));
+        // grid visibly shears. A proportional font is given the width of the
+        // widest character it draws, so that no glyph overflows its cell.
+        cellWidth = qMax(1, qRound(uniformAdvance ? naturalAdvance : widestAdvance));
         cellHeight = qMax(1, int(std::ceil(metrics.height())));
         baseline = metrics.ascent();
 
-        // Each glyph is made to advance exactly one cell.
+        // Each glyph of a fixed-width font is made to advance exactly one
+        // cell.
         //
         // Text is drawn a run at a time rather than a cell at a time, which
         // means the font's own advances decide where the characters inside a
@@ -65,7 +82,16 @@ public:
         // two from the grid — and then the next run, which starts at its own
         // column, snaps back, leaving a visible gap in the middle of a word
         // wherever the colour changes.
+        //
+        // A proportional font gets no such spacing. It is added to every
+        // glyph, so it is added to the space as well — and a proportional
+        // space is about a third the width of a cell, which leaves the words
+        // of a line closed up as though the spaces between them had been
+        // deleted. Those fonts are drawn a cell at a time instead; `paint`
+        // does that.
         const auto fitToCell = [this](QFont &candidate) {
+            if (!uniformAdvance)
+                return;
             const qreal advance = QFontMetricsF(candidate).horizontalAdvance(QLatin1Char('M'));
             candidate.setLetterSpacing(QFont::AbsoluteSpacing, cellWidth - advance);
         };
@@ -245,6 +271,11 @@ public:
     int cellWidth = 8;
     int cellHeight = 16;
     qreal baseline = 12;
+    // Whether every character of the drawing fonts advances by one cell, and
+    // so whether a line can be drawn a run at a time. `recomputeMetrics` sets
+    // it from the font that is actually resolved rather than the one asked
+    // for.
+    bool uniformAdvance = true;
 
     int columns = 80;
     int rows = 24;
@@ -352,9 +383,18 @@ QFont TerminalView::font() const { return d->font; }
 
 void TerminalView::setFont(const QFont &font)
 {
-    if (d->font == font)
+    // The family is the application's choice and is left alone; the hint is
+    // what decides where a family this platform does not have falls back to,
+    // and without it that is the proportional interface font. An application
+    // naming a font — "JetBrains Mono" — cannot know it is installed, and
+    // "monospace" itself is a fontconfig alias that exists on Linux and
+    // nowhere else.
+    QFont wanted = font;
+    wanted.setStyleHint(QFont::Monospace);
+    wanted.setFixedPitch(true);
+    if (d->font == wanted)
         return;
-    d->font = font;
+    d->font = wanted;
     d->recomputeMetrics();
     d->updateGrid();
     Q_EMIT fontChanged();
@@ -585,7 +625,8 @@ void TerminalView::paint(QPainter *painter)
                 continue;
             }
 
-            const bool individual = needsIndividualPlacement(cell.ch) || !cell.extra.isEmpty();
+            const bool individual = !d->uniformAdvance || needsIndividualPlacement(cell.ch)
+                                    || !cell.extra.isEmpty();
             QString run = text;
             int end = column + 1;
             if (!individual) {

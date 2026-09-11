@@ -34,6 +34,12 @@ class KVITTERM_EXPORT TerminalView : public QQuickPaintedItem
 
     Q_PROPERTY(kvitterm::TerminalSession *session READ session WRITE setSession NOTIFY sessionChanged)
     Q_PROPERTY(kvitterm::TerminalPalette *palette READ palette WRITE setPalette NOTIFY paletteChanged)
+    // The default is the platform's own fixed-width font. A family this
+    // machine does not have falls back to another fixed-width font rather
+    // than to the proportional interface font, so what is read back carries a
+    // monospace style hint the application need not have set. A proportional
+    // family asked for by name is used, and drawn a cell at a time so that
+    // the grid holds.
     Q_PROPERTY(QFont font READ font WRITE setFont NOTIFY fontChanged)
     // How far back the view is scrolled, in lines. Zero is the bottom, where
     // new output appears.

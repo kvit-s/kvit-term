@@ -147,6 +147,22 @@ over nine or ten characters a run drifts a pixel or two from the grid, and the
 next run — which starts at its own column — snaps back, leaving a visible gap
 in the middle of a word wherever the colour changes.
 
+That correction assumes a fixed-width font, so the view measures rather than
+assumes: `recomputeMetrics` compares the advance of every printable ASCII
+character, and a font whose characters differ gets no letter spacing and is
+drawn a cell at a time. Spacing added to every glyph is added to the space as
+well, and a proportional space is about a third the width of a letter, so the
+line would close up and read as though every space in the output had been
+deleted — the failure this guards against, and the reason a view whose font
+cannot be resolved falls back to a fixed-width one rather than to the
+interface font.
+
+`tests/unit/test_rendering.cpp` holds this: it draws letters in columns 0, 2
+and 4 and reads the image back, in the default font and in a proportional one.
+It is the only suite that looks at pixels, because a grid is a claim about
+where things are drawn that the screen model cannot make — the model holds the
+spaces either way.
+
 If the painter turns out to be too slow for output rates nobody has hit yet,
 the escape hatch is a scene-graph node with a texture atlas rather than a
 different item.

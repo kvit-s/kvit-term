@@ -52,3 +52,7 @@ set_tests_properties(test_terminalview PROPERTIES
 kvitterm_unit_test(test_shellintegration)
 kvitterm_unit_test(test_links)
 kvitterm_unit_test(test_terminalsearch)
+# The one suite that looks at pixels: a grid is a claim about where things
+# are drawn, which no assertion about the model can make.
+kvitterm_unit_test(test_rendering)
+
