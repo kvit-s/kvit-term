@@ -604,14 +604,22 @@ Cell Screen::cell(int row, int column) const
 QString Screen::text(int fromRow, int toRow) const
 {
     QString result;
+    Line current;
     for (int row = fromRow; row <= toRow; ++row) {
-        const Line current = line(row);
+        if (row == fromRow)
+            current = line(row);
+        // Each row is read once and kept for the next turn, because what to do
+        // with the blanks at the end of this one is the row below's to say.
+        const Line below = row < toRow ? line(row + 1) : Line{};
         // A line that was wrapped from the one above is joined back onto it,
         // so that copying a long command line gives the command rather than
-        // the shape the window happened to have.
+        // the shape the window happened to have. Where it carries on past this
+        // row, the blanks at the end of the row are spaces inside the line.
         if (row != fromRow && !current.continuation)
             result += QLatin1Char('\n');
-        result += current.text();
+        result += current.text(0, -1, below.continuation ? TrailingBlanks::Keep
+                                                         : TrailingBlanks::Drop);
+        current = below;
     }
     return result;
 }
@@ -624,8 +632,11 @@ QString Screen::textInRange(const QPoint &start, const QPoint &end, bool block) 
         std::swap(from, to);
 
     QString result;
+    Line current;
     for (int row = from.y(); row <= to.y(); ++row) {
-        const Line current = line(row);
+        if (row == from.y())
+            current = line(row);
+        const Line below = row < to.y() ? line(row + 1) : Line{};
         int firstColumn = 0;
         int lastColumn = -1;
         if (block) {
@@ -639,7 +650,13 @@ QString Screen::textInRange(const QPoint &start, const QPoint &end, bool block) 
         }
         if (row != from.y())
             result += (!block && current.continuation) ? QString() : QStringLiteral("\n");
-        result += current.text(firstColumn, lastColumn);
+        // A block selection takes the rectangle the user drew and joins
+        // nothing, so only a selection that runs on into the row below keeps
+        // the blanks at the end of this one.
+        const bool runsOn = !block && below.continuation;
+        result += current.text(firstColumn, lastColumn,
+                               runsOn ? TrailingBlanks::Keep : TrailingBlanks::Drop);
+        current = below;
     }
     return result;
 }

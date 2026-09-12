@@ -11,7 +11,7 @@ QString Cell::text() const
     return QString::fromUcs4(&ch, 1);
 }
 
-QString Line::text(int fromColumn, int toColumn) const
+QString Line::text(int fromColumn, int toColumn, TrailingBlanks trailing) const
 {
     const int last = cells.size() - 1;
     const bool toEndOfLine = toColumn < 0 || toColumn >= last;
@@ -25,8 +25,10 @@ QString Line::text(int fromColumn, int toColumn) const
     // Trailing blanks are the width of the window rather than anything the
     // program wrote, so a copied line does not carry them — but only when the
     // range asked for reaches the end of the line, since spaces in the middle
-    // of a selection are the user's.
-    if (toEndOfLine) {
+    // of a selection are the user's. A caller joining the rows of a wrapped
+    // line asks to keep them for that same reason: on a row the line carries
+    // on past, they are spaces inside it.
+    if (toEndOfLine && trailing == TrailingBlanks::Drop) {
         while (result.endsWith(QLatin1Char(' ')))
             result.chop(1);
     }

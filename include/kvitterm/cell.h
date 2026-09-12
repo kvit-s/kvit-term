@@ -93,6 +93,15 @@ struct KVITTERM_EXPORT Cell
     friend bool operator!=(const Cell &a, const Cell &b) { return !(a == b); }
 };
 
+// What `Line::text` does with the blanks at the end of what it was asked for.
+//
+// Normally they are the width of the window rather than anything the program
+// wrote, so reading a line back drops them. On a row that a longer line
+// wrapped through they are spaces inside that line, and a caller joining the
+// rows of such a line back together asks to keep them: dropping them closes
+// the words on either side of the break together.
+enum class TrailingBlanks : quint8 { Drop, Keep };
+
 // One line of the screen or of the scrollback.
 //
 // `cells` can be shorter than the terminal is wide: a scrolled-off line is
@@ -102,14 +111,17 @@ struct KVITTERM_EXPORT Cell
 //
 // `continuation` says the line began as the overflow of the line above rather
 // than at a newline of its own. It is what a re-wrap would need, and what
-// `Screen::exportPlainText` uses to join a wrapped line back together.
+// `Screen::exportPlainText` uses to join a wrapped line back together. It
+// says nothing about the row below, so a caller joining rows decides what to
+// do with this one's trailing blanks by looking at the next row's flag.
 struct KVITTERM_EXPORT Line
 {
     QList<Cell> cells;
     bool continuation = false;
 
     Cell cellAt(int column) const { return column < cells.size() ? cells.at(column) : Cell{}; }
-    QString text(int fromColumn = 0, int toColumn = -1) const;
+    QString text(int fromColumn = 0, int toColumn = -1,
+                 TrailingBlanks trailing = TrailingBlanks::Drop) const;
     bool isBlank() const;
 };
 

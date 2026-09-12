@@ -399,6 +399,25 @@ private Q_SLOTS:
         QCOMPARE(screen.text(0, 1), QStringLiteral("0123456789ABCDE"));
     }
 
+    void aWrappedLineKeepsTheSpacesItBrokeAt()
+    {
+        // A line the window broke where the program had put spaces. Blanks at
+        // the end of a row are usually the width of the window, and reading
+        // that row on its own still drops them; where the line carries on into
+        // the row below they are spaces the program wrote, and joining the
+        // rows without them closes the words on either side of the break up.
+        Screen screen(10, 4);
+        screen.feed("hello     world");
+        QCOMPARE(screen.line(0).text(), QStringLiteral("hello"));
+        QVERIFY(screen.line(1).continuation);
+
+        QCOMPARE(screen.text(0, 1), QStringLiteral("hello     world"));
+        QCOMPARE(screen.textInRange(QPoint(0, 0), QPoint(4, 1)),
+                 QStringLiteral("hello     world"));
+        // One span per row, so the two halves stay separate elements; what
+        // matters is that the first still ends in the spaces.
+        QVERIFY(exportHtml(screen, 0, 1).contains(QStringLiteral(">hello     <")));
+    }
 };
 
 QTEST_MAIN(TestScreen)

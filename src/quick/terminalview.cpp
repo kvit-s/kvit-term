@@ -199,7 +199,12 @@ public:
             for (int r = first; r <= row; ++r) {
                 if (r == row)
                     offset = int(joined.size());
-                joined += s->line(r).text();
+                // Every row before this one is continued by the next, so the
+                // blanks at its end are spaces inside the line. Dropping them
+                // would shorten the text before the pointer's row and look up
+                // the wrong character for the column under the pointer.
+                joined += s->line(r).text(0, -1, r == row ? TrailingBlanks::Drop
+                                                          : TrailingBlanks::Keep);
             }
             text = joined;
         }

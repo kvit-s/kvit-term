@@ -139,8 +139,23 @@ back into one logical line, re-splits it at the new width without cutting a
 double-width character in half, and stores the pieces. `libvterm` re-wraps the
 visible screen itself, once `vterm_screen_enable_reflow()` has been called.
 
-`aWrappedLineIsMarkedAsOne` and `resizingRewrapsTheScrollbackToo` in
-`tests/unit/test_screen.cpp` are the cases that hold this together.
+Anything else that joins the rows of a wrapped line has the same blanks to
+think about, and for the same reason: `Screen::text()`, `Screen::textInRange()`
+behind a selection, `exportHtml()`, and the walk back over continuations that
+`TerminalView` does to find the link under the pointer. Reading one row back on
+its own drops the blanks at its end, since there they are the width of the
+window; a row the line carries on past keeps them, since there they are spaces
+the program wrote. Each of those callers decides by looking at the flag on the
+row below and passing `TrailingBlanks::Keep` when it is set. Without it,
+`hello     world` broken across a wrap copies back as `helloworld`, and a path
+after the break is read together with the word before it — `seesrc/core/screen.cpp`
+rather than `src/core/screen.cpp`, which opens nothing.
+
+`aWrappedLineIsMarkedAsOne`, `resizingRewrapsTheScrollbackToo` and
+`aWrappedLineKeepsTheSpacesItBrokeAt` in `tests/unit/test_screen.cpp` are the
+cases that hold this together. The link path has no case of its own: reaching
+it wants a pointer position over a line that wraps at a width the test would
+have to derive from the font.
 
 ## Drawing
 
