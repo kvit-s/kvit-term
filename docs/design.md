@@ -92,6 +92,22 @@ one-word line costs the word. `src/core/scrollback.cpp` packs and unpacks;
 `Screen::line()` returns the unpacked form either way, so callers never see the
 difference.
 
+Dropping the blanks loses something the line needs back, because a line longer
+than the terminal is stored as several rows and the blanks at the end of one of
+those rows are spaces the program wrote inside its line rather than the empty
+part of the window. Rejoining the rows without them closes the words up. So
+`PackedLine` keeps the width the row was stored at beside the text, four bytes
+a line rather than the cells themselves, and `unpackLine()` puts the blanks
+back before `reflowScrollback()` joins anything.
+
+The width that exposes this is not one anybody chooses. A Qt Quick item is laid
+out before it is given a size, so an application that puts the terminal in a
+layout resizes it to a single column while the window settles; at one column
+every space in the output is wrapped onto a row of its own, and without the
+stored width every one of them is dropped. The terminal then draws its output
+with the spaces removed, which is what
+`narrowingToOneColumnKeepsTheSpaces` in `tests/unit/test_screen.cpp` holds.
+
 ## Which stored lines were wrapped, and why it was hard
 
 Re-wrapping the history when the window is resized needs to know which stored

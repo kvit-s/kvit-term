@@ -336,6 +336,33 @@ private Q_SLOTS:
                                       QStringLiteral("ABCDE"), QStringLiteral("FGHIJ")}));
     }
 
+    void narrowingToOneColumnKeepsTheSpaces()
+    {
+        // A row that a longer line wrapped through is full to its last cell,
+        // so blanks at the end of it are spaces the program wrote rather than
+        // the empty part of the window. Stored without them and joined back
+        // up, the words of the line close together and every column after the
+        // first means nothing.
+        //
+        // One column is not a contrived width. An item is laid out before it
+        // is given a size, so an application that puts the terminal in a
+        // layout resizes it to its smallest before the window settles, and at
+        // that width every space in the output is wrapped onto a row of its
+        // own.
+        const QString written =
+                QStringLiteral("alpha beta gamma delta epsilon zeta eta theta");
+        Screen screen(44, 10);
+        for (int line = 0; line < 6; ++line)
+            screen.feed((written + QStringLiteral("\r\n")).toUtf8().constData());
+
+        screen.setSize(1, 10);
+        screen.setSize(80, 10);
+
+        QVERIFY2(screen.scrollbackCount() > 0,
+                 "nothing was stored, so the round trip this is about did not happen");
+        QCOMPARE(screen.line(-screen.scrollbackCount()).text(), written);
+    }
+
     void textIsReadBackAcrossLinesAndInBlocks()
     {
         Screen screen(20, 4);
@@ -371,6 +398,7 @@ private Q_SLOTS:
         screen.feed("0123456789ABCDE\r\n");
         QCOMPARE(screen.text(0, 1), QStringLiteral("0123456789ABCDE"));
     }
+
 };
 
 QTEST_MAIN(TestScreen)

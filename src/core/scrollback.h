@@ -10,6 +10,13 @@
 // one entry per stretch of identical attributes, which for ordinary output is
 // a handful per line — and drops trailing blanks entirely. A one-word line in
 // a wide terminal costs the word.
+//
+// Dropping them loses something the line needs back. A line longer than the
+// terminal is stored as several rows, and the blanks at the end of one of
+// those rows are spaces the program wrote in the middle of its line rather
+// than the empty part of the window: rejoining the rows without them closes
+// the words up. So the width the row was stored at is kept beside the text,
+// and `unpackLine` puts the blanks back.
 #pragma once
 
 #include <QtCore/QHash>
@@ -37,8 +44,11 @@ struct PackedLine
     // Only for the rare cell holding combining marks, keyed by cell index.
     QHash<int, QString> combining;
     bool continuation = false;
+    // How many cells the row had when it was stored, before the trailing
+    // blanks were dropped.
+    int width = 0;
 
-    int cellCount() const { return int(chars.size()); }
+    int cellCount() const { return qMax(int(chars.size()), width); }
     qsizetype approximateBytes() const;
 };
 

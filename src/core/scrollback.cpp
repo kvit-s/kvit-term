@@ -13,9 +13,11 @@ PackedLine packLine(const QList<Cell> &cells, bool continuation)
 {
     PackedLine packed;
     packed.continuation = continuation;
+    packed.width = int(cells.size());
 
     // Trailing blanks in the default style are not stored: they are what the
-    // renderer draws for anything past the end of a line anyway.
+    // renderer draws for anything past the end of a line anyway, and on a row
+    // a longer line wrapped through `unpackLine` puts them back.
     int end = cells.size();
     const Style blankStyle;
     while (end > 0) {
@@ -44,11 +46,15 @@ Line unpackLine(const PackedLine &packed)
 {
     Line line;
     line.continuation = packed.continuation;
+    // The width it was stored at, not just the text that survived: the blanks
+    // dropped from the end are cells of the line wherever a longer one wrapped
+    // through this row.
     const int count = packed.cellCount();
+    const int stored = int(packed.chars.size());
     line.cells.reserve(count);
 
     int runIndex = 0;
-    for (int index = 0; index < count; ++index) {
+    for (int index = 0; index < stored; ++index) {
         while (runIndex + 1 < packed.runs.size()
                && index >= packed.runs.at(runIndex).start + packed.runs.at(runIndex).length) {
             ++runIndex;
@@ -66,6 +72,8 @@ Line unpackLine(const PackedLine &packed)
             cell.extra = *combining;
         line.cells.append(cell);
     }
+    for (int index = stored; index < count; ++index)
+        line.cells.append(Cell{});
 
     // A double-width character is stored as its code point followed by a null:
     // restore the width the renderer needs from that pairing.
