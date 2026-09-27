@@ -42,6 +42,25 @@ Each is marked in the source with "Kvit's change" or "Kvit's addition".
    the application.
 6. **The conformance test's import path** (`conformance_test.go`), which
    names this copy.
+7. **Scrollback lines stored compactly** (`bufferline.go`, `bufferservice.go`,
+   `buffer.go`). A line that scrolls off the screen, and every scrollback
+   line after a resize, keeps only its cells up to the last one written
+   (`BufferLine.Compact`); a cell past them reads as a null cell, and the
+   first write stores the rest again. A line's two maps are allocated only
+   when a cell needs an entry. The storage a compacted line gives up is
+   reused for the next new line, so scrolling allocates no more than before.
+   10,000 lines of recorded output take 7.1–7.9 MB at 80 to 200 columns,
+   where they took 11.8–27.7 MB. `compact_test.go` feeds every recording,
+   with resizes down to two columns between its parts, to a terminal that
+   compacts and one that does not, and requires the same cells in both after
+   every step.
+8. **Narrowing a full scrollback** (`buffer.go`, `reflowSmaller`). When
+   re-wrapping at a smaller width adds more lines than the buffer holds, the
+   surplus falls off the top. xterm.js writes those lines to negative
+   indexes, which JavaScript ignores; the port panicked. It happened resizing
+   a terminal full of `git log` output to two columns, the kind of size a
+   window's layout can give for a moment. The surplus is now skipped;
+   `screen.TestNarrowingAFullScrollbackDoesNotLoseTheScreen` held it.
 
 ## Updating
 

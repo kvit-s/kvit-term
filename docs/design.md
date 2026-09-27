@@ -122,8 +122,9 @@ library used. It is young (created 2026-03, no releases), so it is kept as a
 copy that changes only deliberately, as the Qt library kept libvterm. Its
 changes are listed in `third_party/xterm/KVIT-PATCH.md`: a current character
 width table, a fix for switching autowrap off and on, a count of lines trimmed
-from the top of the buffer, a way to change the scrollback size, and access to
-its parser.
+from the top of the buffer, a way to change the scrollback size, access to its
+parser, scrollback lines stored compactly, and a fix for a panic when a full
+scrollback is narrowed to a few columns.
 
 `screen/vtdiff_test.go` is the regression test: 73 recorded streams, from
 real programs (vim, less, top, tmux, nano, git log) to one feature at a time,
@@ -169,9 +170,14 @@ spaces the program wrote: without that, `hello     world` broken across a
 wrap copies back as `helloworld`. `Screen.Text`, `TextInRange`, `HTML`, the
 link finder and the search all follow the row below's flag for this.
 
-The scrollback stores every line as xterm-go does, twelve bytes a cell:
-10,000 lines take 11.8 MB at 80 columns and 27.7 MB at 200. The Qt library
-packed stored lines into runs of one style without their trailing blanks.
+A line in the scrollback is stored only up to its last written cell,
+twelve bytes a cell, so a one-word line in a wide terminal costs the word:
+10,000 lines of recorded output take 7.1 MB at 80 columns and 7.9 MB at 200.
+Blanks a program wrote, and cells with a colour of their own, are kept, which
+matters for the same reason as above: at the end of a row a longer line
+wraps through, the blanks are spaces inside that line. The copy of xterm-go
+does this (`BufferLine.Compact`, its KVIT-PATCH.md item 7). The Qt library
+packed stored lines into runs of one style for the same purpose.
 
 ## Drawing
 

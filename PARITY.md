@@ -65,7 +65,8 @@ the Qt library and the Go equivalent of each, so that step can start from it.
 - [x] A wrapped line copied as one, keeping the spaces it broke at. Evidence: `TestAWrappedLineIsCopiedAsOneLine`, `TestAWrappedLineKeepsTheSpacesItBrokeAt`
 - [x] Plain text and styled HTML. Evidence: `TestWhatIsOnTheScreenComesOutAsStyledText`, `TestTheSessionCanBeReadAsStyledHTML`
 - [ ] **Different:** the line holding the cursor is not re-wrapped on a resize; the shell redraws it. xterm.js does the same; libvterm re-wraps it. Evidence: `TestTheLineWithTheCursorIsLeftToTheProgram`
-- [ ] **Different:** scrollback storage is xterm-go's grid, twelve bytes a cell: 10,000 lines take 11.8 MB at 80 columns, 16.7 MB at 120 and 27.7 MB at 200. The Qt library packed each stored line into runs of one style without its trailing blanks.
+- [x] A scrollback line is stored without the cells nothing was written to, so its cost follows what it holds rather than the width: 10,000 lines of recorded output take 7.1 MB at 80 columns and 7.9 MB at 200. The Qt library packed each stored line into runs of one style for the same purpose. Evidence: `TestCompactedLinesReadBackAsTheFullLines` (the same cells as uncompacted storage, through resizes), KVIT-PATCH.md item 7
+- [x] Narrowing a full scrollback to a few columns and back. Evidence: `TestNarrowingAFullScrollbackDoesNotLoseTheScreen` (xterm-go as found panicked)
 
 ## The session
 

@@ -31,6 +31,10 @@ type BufferService struct {
 
 	cachedBlankLine *BufferLine
 
+	// spare is the storage the last line to leave the screen gave up when
+	// it was compacted, for the next new line. (Kvit's addition.)
+	spare []uint32
+
 	windowsPtyOptionDisposable Disposable
 }
 
@@ -109,9 +113,23 @@ func (bs *BufferService) Scroll(eraseAttr *AttributeData, isWrapped bool) {
 
 		if bottomRow == buffer.Lines.Length()-1 {
 			if willBufferBeTrimmed {
-				buffer.Lines.Recycle().CopyFrom(newLine)
+				// The oldest line is reused for the new one; it was stored
+				// compactly, so it takes the storage the last compacted line
+				// gave up. (Kvit's change; see KVIT-PATCH.md.)
+				line := buffer.Lines.Recycle()
+				if len(line.data) != len(newLine.data) && line.reuse(bs.spare, newLine.Len) {
+					bs.spare = nil
+				}
+				line.CopyFrom(newLine)
 			} else {
-				buffer.Lines.Push(newLine.Clone())
+				line := &BufferLine{Len: newLine.Len}
+				if line.reuse(bs.spare, newLine.Len) {
+					bs.spare = nil
+				} else {
+					line.data = make([]uint32, len(newLine.data))
+				}
+				line.CopyFrom(newLine)
+				buffer.Lines.Push(line)
 			}
 		} else {
 			buffer.Lines.Splice(bottomRow+1, 0, newLine.Clone())
@@ -124,6 +142,13 @@ func (bs *BufferService) Scroll(eraseAttr *AttributeData, isWrapped bool) {
 			}
 		} else if bs.IsUserScrolling {
 			buffer.YDisp = max(buffer.YDisp-1, 0)
+		}
+		// The line that left the screen is stored without the cells nothing
+		// was written to. (Kvit's change; see KVIT-PATCH.md.)
+		if buffer.hasScrollback && buffer.YBase > 0 {
+			if released := buffer.Lines.Get(buffer.YBase - 1).compact(); released != nil {
+				bs.spare = released
+			}
 		}
 	} else {
 		// Non-zero scrollTop: shift lines in-place within the scroll region.

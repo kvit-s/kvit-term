@@ -7,6 +7,7 @@ package screen
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 )
@@ -568,5 +569,31 @@ func TestTheCursorsShapeAndVisibilityFollowTheProgram(t *testing.T) {
 	feed(s, "\x1b[?25l")
 	if s.CursorVisible() {
 		t.Error("hidden cursor still visible")
+	}
+}
+
+func TestNarrowingAFullScrollbackDoesNotLoseTheScreen(t *testing.T) {
+	// A layout can give a terminal a few columns for a moment while a
+	// window settles. With a scrollback full of real output, narrowing adds
+	// more lines than it holds, and xterm-go as found wrote the surplus
+	// above its first line and panicked; xterm.js, which it ports, ignores
+	// those writes.
+	data, err := os.ReadFile("testdata/vtdiff/streams/gitlog.bin")
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := New(80, 24)
+	s.SetScrollbackLimit(500)
+	for i := 0; i < 4; i++ {
+		s.Feed(data)
+	}
+	last := s.Text(0, s.Rows()-1)
+	s.SetSize(2, 5)
+	s.SetSize(80, 24)
+	if s.ScrollbackCount() > 500 {
+		t.Errorf("the scrollback holds %d lines", s.ScrollbackCount())
+	}
+	if got := s.Text(0, s.Rows()-1); !strings.Contains(last, strings.TrimSpace(got[strings.LastIndex(strings.TrimSpace(got), "\n")+1:])) {
+		t.Errorf("after narrowing and widening, the screen ends with %q", got)
 	}
 }

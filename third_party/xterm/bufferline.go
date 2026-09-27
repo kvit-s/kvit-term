@@ -14,6 +14,12 @@ const (
 )
 
 // BufferLine stores a single terminal line as a flat []uint32 with 3 values per cell.
+//
+// A line in the scrollback keeps only its cells up to the last one that was
+// written (see Compact), so data can hold fewer than Len cells; a cell past
+// them reads as a null cell, and the first write restores the rest. The two
+// maps are nil until a cell needs an entry in them. (Kvit's change; see
+// KVIT-PATCH.md.)
 type BufferLine struct {
 	data          []uint32
 	combined      map[int]string
@@ -26,11 +32,9 @@ type BufferLine struct {
 // If fillCell is nil, cells are filled with null cell defaults.
 func NewBufferLine(cols int, fillCell *CellData, isWrapped bool) *BufferLine {
 	bl := &BufferLine{
-		data:          make([]uint32, cols*cellSize),
-		combined:      make(map[int]string),
-		extendedAttrs: make(map[int]*ExtendedAttrs),
-		Len:           cols,
-		IsWrapped:     isWrapped,
+		data:      make([]uint32, cols*cellSize),
+		Len:       cols,
+		IsWrapped: isWrapped,
 	}
 	if fillCell == nil {
 		fillCell = CellDataFromCharData(NewCharData(0, NullCellChar, NullCellWidth, NullCellCode))
@@ -41,37 +45,151 @@ func NewBufferLine(cols int, fillCell *CellData, isWrapped bool) *BufferLine {
 	return bl
 }
 
+// compactLines is false only in the test that compares a terminal whose
+// lines are compacted with one whose lines are not.
+var compactLines = true
+
+// nullContent is the content word of a cell nothing was written to.
+const nullContent = uint32(NullCellWidth) << ContentWidthShift
+
+// word is one of the three values of a cell, reading a cell past those
+// stored as a null cell.
+func (bl *BufferLine) word(i int) uint32 {
+	if i < len(bl.data) {
+		return bl.data[i]
+	}
+	if i%cellSize == cellContent {
+		return nullContent
+	}
+	return 0
+}
+
+// isNullCell reports a cell nothing was written to: no content, width one,
+// default colours and no attributes.
+func isNullCell(content, fg, bg uint32) bool {
+	return content == nullContent && fg == 0 && bg == 0
+}
+
+// expand stores every cell of a compacted line again, before a write. It is
+// small enough to be inlined into every write; grow does the work.
+func (bl *BufferLine) expand() {
+	if len(bl.data) < bl.Len*cellSize {
+		bl.grow()
+	}
+}
+
+func (bl *BufferLine) grow() {
+	n := bl.Len * cellSize
+	stored := len(bl.data)
+	if cap(bl.data) >= n {
+		bl.data = bl.data[:n]
+	} else {
+		grown := make([]uint32, n)
+		copy(grown, bl.data)
+		bl.data = grown
+	}
+	for i := stored; i < n; i += cellSize {
+		bl.data[i+cellContent] = nullContent
+		bl.data[i+cellFg] = 0
+		bl.data[i+cellBg] = 0
+	}
+}
+
+// Compact stops storing the null cells at the end of the line, and frees
+// maps that hold nothing. A line leaving the screen for the scrollback is
+// compacted: a one-word line in a wide terminal then costs the word rather
+// than every cell of the width. Blanks a program wrote, and cells with a
+// colour or attribute, are kept. (Kvit's addition; see KVIT-PATCH.md.)
+func (bl *BufferLine) Compact() { bl.compact() }
+
+// compact is Compact, returning the storage it replaced for a new line to
+// reuse, or nil.
+func (bl *BufferLine) compact() (released []uint32) {
+	if !compactLines {
+		return nil
+	}
+	n := min(len(bl.data)/cellSize, bl.Len)
+	for n > 0 {
+		i := (n - 1) * cellSize
+		if !isNullCell(bl.data[i+cellContent], bl.data[i+cellFg], bl.data[i+cellBg]) {
+			break
+		}
+		n--
+	}
+	if n*cellSize < len(bl.data) {
+		kept := make([]uint32, n*cellSize)
+		copy(kept, bl.data)
+		released = bl.data
+		bl.data = kept
+	}
+	if len(bl.combined) == 0 {
+		bl.combined = nil
+	}
+	if len(bl.extendedAttrs) == 0 {
+		bl.extendedAttrs = nil
+	}
+	return released
+}
+
+// reuse gives the line storage for n cells from spare when spare is large
+// enough, so a new line need not allocate. (Kvit's addition.)
+func (bl *BufferLine) reuse(spare []uint32, n int) bool {
+	if cap(spare) < n*cellSize {
+		return false
+	}
+	bl.data = spare[:n*cellSize]
+	return true
+}
+
+// StoredCells is how many cells the line stores; the rest read as null
+// cells. (Kvit's addition, for tests; see KVIT-PATCH.md.)
+func (bl *BufferLine) StoredCells() int { return len(bl.data) / cellSize }
+
+func (bl *BufferLine) setCombined(index int, s string) {
+	if bl.combined == nil {
+		bl.combined = make(map[int]string)
+	}
+	bl.combined[index] = s
+}
+
+func (bl *BufferLine) setExtended(index int, e *ExtendedAttrs) {
+	if bl.extendedAttrs == nil {
+		bl.extendedAttrs = make(map[int]*ExtendedAttrs)
+	}
+	bl.extendedAttrs[index] = e
+}
+
 // --- Primitive getters ---
 
 // GetWidth returns the display width of the cell at index.
 func (bl *BufferLine) GetWidth(index int) int {
-	return int(bl.data[index*cellSize+cellContent] >> ContentWidthShift)
+	return int(bl.word(index*cellSize+cellContent) >> ContentWidthShift)
 }
 
 // HasWidth returns non-zero if the cell at index has a width set.
 func (bl *BufferLine) HasWidth(index int) uint32 {
-	return bl.data[index*cellSize+cellContent] & ContentWidthMask
+	return bl.word(index*cellSize+cellContent) & ContentWidthMask
 }
 
 // GetFg returns the fg attribute of the cell at index.
 func (bl *BufferLine) GetFg(index int) uint32 {
-	return bl.data[index*cellSize+cellFg]
+	return bl.word(index*cellSize+cellFg)
 }
 
 // GetBg returns the bg attribute of the cell at index.
 func (bl *BufferLine) GetBg(index int) uint32 {
-	return bl.data[index*cellSize+cellBg]
+	return bl.word(index*cellSize+cellBg)
 }
 
 // HasContent returns non-zero if the cell at index has content.
 func (bl *BufferLine) HasContent(index int) uint32 {
-	return bl.data[index*cellSize+cellContent] & ContentHasContentMask
+	return bl.word(index*cellSize+cellContent) & ContentHasContentMask
 }
 
 // GetCodePoint returns the codepoint of the cell at index.
 // For combined cells, returns the last char code of the combined string.
 func (bl *BufferLine) GetCodePoint(index int) uint32 {
-	content := bl.data[index*cellSize+cellContent]
+	content := bl.word(index*cellSize+cellContent)
 	if content&ContentIsCombinedMask != 0 {
 		s := bl.combined[index]
 		if len(s) == 0 {
@@ -86,12 +204,12 @@ func (bl *BufferLine) GetCodePoint(index int) uint32 {
 
 // IsCombined returns non-zero if the cell at index has combined content.
 func (bl *BufferLine) IsCombined(index int) uint32 {
-	return bl.data[index*cellSize+cellContent] & ContentIsCombinedMask
+	return bl.word(index*cellSize+cellContent) & ContentIsCombinedMask
 }
 
 // GetString returns the string content of the cell at index.
 func (bl *BufferLine) GetString(index int) string {
-	content := bl.data[index*cellSize+cellContent]
+	content := bl.word(index*cellSize+cellContent)
 	if content&ContentIsCombinedMask != 0 {
 		return bl.combined[index]
 	}
@@ -104,14 +222,14 @@ func (bl *BufferLine) GetString(index int) string {
 
 // IsProtected returns non-zero if the cell at index has the PROTECTED flag.
 func (bl *BufferLine) IsProtected(index int) uint32 {
-	return bl.data[index*cellSize+cellBg] & BgFlagProtected
+	return bl.word(index*cellSize+cellBg) & BgFlagProtected
 }
 
 // --- Get/Set (legacy CharData) ---
 
 // Get returns the cell at index as a legacy CharData tuple.
 func (bl *BufferLine) Get(index int) CharData {
-	content := bl.data[index*cellSize+cellContent]
+	content := bl.word(index*cellSize+cellContent)
 	cp := content & ContentCodepointMask
 	var ch string
 	if content&ContentIsCombinedMask != 0 {
@@ -129,7 +247,7 @@ func (bl *BufferLine) Get(index int) CharData {
 		code = cp
 	}
 	return NewCharData(
-		bl.data[index*cellSize+cellFg],
+		bl.word(index*cellSize+cellFg),
 		ch,
 		int(content>>ContentWidthShift),
 		code,
@@ -138,12 +256,13 @@ func (bl *BufferLine) Get(index int) CharData {
 
 // Set sets the cell at index from a legacy CharData tuple.
 func (bl *BufferLine) Set(index int, value CharData) {
+	bl.expand()
 	bl.data[index*cellSize+cellFg] = CharDataAttr(value)
 	ch := CharDataChar(value)
 	width := CharDataWidth(value)
 	runes := []rune(ch)
 	if len(runes) > 1 {
-		bl.combined[index] = ch
+		bl.setCombined(index, ch)
 		bl.data[index*cellSize+cellContent] = ContentIsCombinedMask | (uint32(width) << ContentWidthShift)
 	} else if len(runes) == 1 {
 		delete(bl.combined, index)
@@ -159,9 +278,9 @@ func (bl *BufferLine) Set(index int, value CharData) {
 // LoadCell loads the cell at index into the provided CellData, returning it.
 func (bl *BufferLine) LoadCell(index int, cell *CellData) *CellData {
 	si := index * cellSize
-	cell.Content = bl.data[si+cellContent]
-	cell.Fg = bl.data[si+cellFg]
-	cell.Bg = bl.data[si+cellBg]
+	cell.Content = bl.word(si+cellContent)
+	cell.Fg = bl.word(si+cellFg)
+	cell.Bg = bl.word(si+cellBg)
 	if cell.Content&ContentIsCombinedMask != 0 {
 		cell.CombinedData = bl.combined[index]
 	} else {
@@ -173,7 +292,7 @@ func (bl *BufferLine) LoadCell(index int, cell *CellData) *CellData {
 
 // GetExtended returns the extended attributes of the cell at index.
 func (bl *BufferLine) GetExtended(index int) *ExtendedAttrs {
-	if bl.data[index*cellSize+cellBg]&BgFlagHasExtended != 0 {
+	if bl.word(index*cellSize+cellBg)&BgFlagHasExtended != 0 {
 		return bl.extendedAttrs[index]
 	}
 	return &ExtendedAttrs{}
@@ -181,13 +300,14 @@ func (bl *BufferLine) GetExtended(index int) *ExtendedAttrs {
 
 // SetCell sets the cell at index from a CellData.
 func (bl *BufferLine) SetCell(index int, cell *CellData) {
+	bl.expand()
 	if cell.Content&ContentIsCombinedMask != 0 {
-		bl.combined[index] = cell.CombinedData
+		bl.setCombined(index, cell.CombinedData)
 	} else {
 		delete(bl.combined, index)
 	}
 	if cell.Bg&BgFlagHasExtended != 0 {
-		bl.extendedAttrs[index] = cell.Extended
+		bl.setExtended(index, cell.Extended)
 	} else {
 		delete(bl.extendedAttrs, index)
 	}
@@ -199,10 +319,13 @@ func (bl *BufferLine) SetCell(index int, cell *CellData) {
 
 // SetCellFromCodepoint sets a cell from a codepoint, width, and attribute data.
 func (bl *BufferLine) SetCellFromCodepoint(index int, codePoint uint32, width int, attrs *AttributeData) {
-	delete(bl.combined, index)
+	bl.expand()
+	if len(bl.combined) > 0 {
+		delete(bl.combined, index)
+	}
 	if attrs.Bg&BgFlagHasExtended != 0 {
-		bl.extendedAttrs[index] = attrs.Extended
-	} else {
+		bl.setExtended(index, attrs.Extended)
+	} else if len(bl.extendedAttrs) > 0 {
 		delete(bl.extendedAttrs, index)
 	}
 	si := index * cellSize
@@ -213,13 +336,14 @@ func (bl *BufferLine) SetCellFromCodepoint(index int, codePoint uint32, width in
 
 // AddCodepointToCell adds a combining codepoint to the cell at index.
 func (bl *BufferLine) AddCodepointToCell(index int, codePoint uint32, width int) {
+	bl.expand()
 	content := bl.data[index*cellSize+cellContent]
 	if content&ContentIsCombinedMask != 0 {
-		bl.combined[index] += string(rune(codePoint))
+		bl.setCombined(index, bl.combined[index]+string(rune(codePoint)))
 	} else {
 		cp := content & ContentCodepointMask
 		if cp != 0 {
-			bl.combined[index] = string(rune(cp)) + string(rune(codePoint))
+			bl.setCombined(index, string(rune(cp))+string(rune(codePoint)))
 			content &= ^ContentCodepointMask
 			content |= ContentIsCombinedMask
 		} else {
@@ -326,6 +450,29 @@ func (bl *BufferLine) Resize(cols int, fillCell *CellData) bool {
 		return len(bl.data)*4*cleanupThreshold < cap(bl.data)*4
 	}
 	uint32Cells := cols * cellSize
+	if len(bl.data) < bl.Len*cellSize {
+		// A compacted line: the null cells it does not store stretch or
+		// shrink with it, unless it grows with cells of another kind.
+		if cols > bl.Len && !isNullCell(fillCell.Content, fillCell.Fg, fillCell.Bg) {
+			bl.expand()
+		} else {
+			if len(bl.data) > uint32Cells {
+				bl.data = bl.data[:uint32Cells]
+			}
+			for k := range bl.combined {
+				if k >= cols {
+					delete(bl.combined, k)
+				}
+			}
+			for k := range bl.extendedAttrs {
+				if k >= cols {
+					delete(bl.extendedAttrs, k)
+				}
+			}
+			bl.Len = cols
+			return false
+		}
+	}
 	if cols > bl.Len {
 		if cap(bl.data) >= uint32Cells {
 			bl.data = bl.data[:uint32Cells]
@@ -377,8 +524,8 @@ func (bl *BufferLine) Fill(fillCell *CellData, respectProtect bool) {
 		}
 		return
 	}
-	bl.combined = make(map[int]string)
-	bl.extendedAttrs = make(map[int]*ExtendedAttrs)
+	bl.combined = nil
+	bl.extendedAttrs = nil
 	for i := range bl.Len {
 		bl.SetCell(i, fillCell)
 	}
@@ -386,7 +533,7 @@ func (bl *BufferLine) Fill(fillCell *CellData, respectProtect bool) {
 
 // CopyFrom copies all data from another BufferLine.
 func (bl *BufferLine) CopyFrom(line *BufferLine) {
-	if bl.Len != line.Len {
+	if len(bl.data) != len(line.data) {
 		bl.data = make([]uint32, len(line.data))
 	}
 	copy(bl.data, line.data)
@@ -398,11 +545,9 @@ func (bl *BufferLine) CopyFrom(line *BufferLine) {
 // Clone returns a deep copy of the BufferLine.
 func (bl *BufferLine) Clone() *BufferLine {
 	newLine := &BufferLine{
-		data:          make([]uint32, len(bl.data)),
-		combined:      make(map[int]string, len(bl.combined)),
-		extendedAttrs: make(map[int]*ExtendedAttrs, len(bl.extendedAttrs)),
-		Len:           bl.Len,
-		IsWrapped:     bl.IsWrapped,
+		data:      make([]uint32, len(bl.data)),
+		Len:       bl.Len,
+		IsWrapped: bl.IsWrapped,
 	}
 	copy(newLine.data, bl.data)
 	newLine.copySparseMapsFrom(bl)
@@ -414,8 +559,8 @@ func (bl *BufferLine) Clone() *BufferLine {
 // GetTrimmedLength returns the number of columns with content, accounting for wide chars.
 func (bl *BufferLine) GetTrimmedLength() int {
 	for i := bl.Len - 1; i >= 0; i-- {
-		if bl.data[i*cellSize+cellContent]&ContentHasContentMask != 0 {
-			return i + int(bl.data[i*cellSize+cellContent]>>ContentWidthShift)
+		if bl.word(i*cellSize+cellContent)&ContentHasContentMask != 0 {
+			return i + int(bl.word(i*cellSize+cellContent)>>ContentWidthShift)
 		}
 	}
 	return 0
@@ -424,9 +569,9 @@ func (bl *BufferLine) GetTrimmedLength() int {
 // GetNoBgTrimmedLength returns the trimmed length considering both content and bg color.
 func (bl *BufferLine) GetNoBgTrimmedLength() int {
 	for i := bl.Len - 1; i >= 0; i-- {
-		if bl.data[i*cellSize+cellContent]&ContentHasContentMask != 0 ||
-			bl.data[i*cellSize+cellBg]&AttrCMMask != 0 {
-			return i + int(bl.data[i*cellSize+cellContent]>>ContentWidthShift)
+		if bl.word(i*cellSize+cellContent)&ContentHasContentMask != 0 ||
+			bl.word(i*cellSize+cellBg)&AttrCMMask != 0 {
+			return i + int(bl.word(i*cellSize+cellContent)>>ContentWidthShift)
 		}
 	}
 	return 0
@@ -434,18 +579,18 @@ func (bl *BufferLine) GetNoBgTrimmedLength() int {
 
 // CopyCellsFrom copies length cells from src starting at srcCol to bl starting at destCol.
 func (bl *BufferLine) CopyCellsFrom(src *BufferLine, srcCol, destCol, length int, applyInReverse bool) {
-	srcData := src.data
+	bl.expand()
 	if applyInReverse {
 		for cell := length - 1; cell >= 0; cell-- {
 			for i := range cellSize {
-				bl.data[(destCol+cell)*cellSize+i] = srcData[(srcCol+cell)*cellSize+i]
+				bl.data[(destCol+cell)*cellSize+i] = src.word((srcCol+cell)*cellSize + i)
 			}
 			bl.copyCellMapsFrom(src, srcCol+cell, destCol+cell)
 		}
 	} else {
 		for cell := range length {
 			for i := range cellSize {
-				bl.data[(destCol+cell)*cellSize+i] = srcData[(srcCol+cell)*cellSize+i]
+				bl.data[(destCol+cell)*cellSize+i] = src.word((srcCol+cell)*cellSize + i)
 			}
 			bl.copyCellMapsFrom(src, srcCol+cell, destCol+cell)
 		}
@@ -456,28 +601,31 @@ func (bl *BufferLine) CopyCellsFrom(src *BufferLine, srcCol, destCol, length int
 // single cell from src[srcCol] to bl[destCol]. It uses the source cell flags to
 // decide whether a sparse entry exists, so only the requested cells are touched.
 func (bl *BufferLine) copyCellMapsFrom(src *BufferLine, srcCol, destCol int) {
-	if srcData := src.data; srcData[srcCol*cellSize+cellContent]&ContentIsCombinedMask != 0 {
-		bl.combined[destCol] = src.combined[srcCol]
+	if src.word(srcCol*cellSize+cellContent)&ContentIsCombinedMask != 0 {
+		bl.setCombined(destCol, src.combined[srcCol])
 	} else {
 		delete(bl.combined, destCol)
 	}
-	if src.data[srcCol*cellSize+cellBg]&BgFlagHasExtended != 0 {
-		bl.extendedAttrs[destCol] = src.extendedAttrs[srcCol]
+	if src.word(srcCol*cellSize+cellBg)&BgFlagHasExtended != 0 {
+		bl.setExtended(destCol, src.extendedAttrs[srcCol])
 	} else {
 		delete(bl.extendedAttrs, destCol)
 	}
 }
 
 func (bl *BufferLine) copySparseMapsFrom(src *BufferLine) {
-	bl.combined = make(map[int]string, len(src.combined))
-	bl.extendedAttrs = make(map[int]*ExtendedAttrs, len(src.extendedAttrs))
-	for i := range src.Len {
+	bl.combined = nil
+	bl.extendedAttrs = nil
+	if len(src.combined) == 0 && len(src.extendedAttrs) == 0 {
+		return
+	}
+	for i := range min(src.Len, len(src.data)/cellSize) {
 		si := i * cellSize
 		if src.data[si+cellContent]&ContentIsCombinedMask != 0 {
-			bl.combined[i] = src.combined[i]
+			bl.setCombined(i, src.combined[i])
 		}
 		if src.data[si+cellBg]&BgFlagHasExtended != 0 {
-			bl.extendedAttrs[i] = src.extendedAttrs[i]
+			bl.setExtended(i, src.extendedAttrs[i])
 		}
 	}
 }
@@ -497,7 +645,7 @@ func (bl *BufferLine) TranslateToString(trimRight bool, startCol, endCol int) st
 	}
 	result := make([]byte, 0, endCol-startCol)
 	for startCol < endCol {
-		content := bl.data[startCol*cellSize+cellContent]
+		content := bl.word(startCol*cellSize+cellContent)
 		cp := content & ContentCodepointMask
 		var chars string
 		if content&ContentIsCombinedMask != 0 {

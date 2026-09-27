@@ -281,6 +281,14 @@ func (b *Buffer) Resize(newCols, newRows int) {
 		maxY := max(0, b.Lines.Length()-b.YBase-1)
 		b.Y = min(b.Y, maxY)
 	}
+
+	// Re-wrapping rebuilt the scrollback's lines at full width; store them
+	// compactly again. (Kvit's change; see KVIT-PATCH.md.)
+	if b.hasScrollback {
+		for i := 0; i < b.YBase && i < b.Lines.Length(); i++ {
+			b.Lines.Get(i).Compact()
+		}
+	}
 }
 
 func (b *Buffer) isReflowEnabled() bool {
@@ -460,7 +468,14 @@ func (b *Buffer) reflowSmaller(newCols, newRows int) {
 		for i := min(b.Lines.MaxLength()-1, originalLinesLength+countToInsert-1); i >= 0; i-- {
 			if nextToInsertIndex < len(toInsert) && nextToInsert.start > originalLineIndex+countInsertedSoFar {
 				for nextI := len(nextToInsert.newLines) - 1; nextI >= 0; nextI-- {
-					b.Lines.Set(i, nextToInsert.newLines[nextI])
+					// Lines that would land above the first one fall off
+					// the top of a full buffer. xterm.js writes them to
+					// negative indexes, which JavaScript ignores; here that
+					// index panicked when narrowing a terminal to a few
+					// columns. (Kvit's change; see KVIT-PATCH.md.)
+					if i >= 0 {
+						b.Lines.Set(i, nextToInsert.newLines[nextI])
+					}
 					i--
 				}
 				i++
