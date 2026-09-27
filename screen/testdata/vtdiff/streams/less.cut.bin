@@ -1,0 +1,35 @@
+[?1049h[22;0;0t[?1h=[K:[K44[K00[Kdrwxr-xr-x  2 root root  4096 Aug  5  2025 [01;34minit[0m[m
+drwxr-xr-x  2 root root  4096 Jan 23  2026 [01;34mispell[0m[m
+drwxr-xr-x  3 root root  4096 Sep 23 06:06 [01;34mjvm[0m[m
+drwxr-xr-x  3 root root  4096 Aug 11 06:06 [01;34mkernel[0m[m
+drwxr-xr-x  2 root root  4096 Dec  6  2025 [01;34mlandscape[0m[m
+lrwxrwxrwx  1 root root    22 Jan 23  2026 [01;36mld-linux.so.2[0m -> [01;32m../lib32/ld-linux.so[m [01;36m[0m[01;32m.2[0m[m
+drwxr-xr-x  7 root root  4096 Jan 23  2026 [01;34mllvm-18[0m[m
+drwxr-xr-x  3 root root  4096 Mar 30  2024 [01;34mlocale[0m[m
+drwxr-xr-x  3 root root  4096 Aug  5  2025 [01;34mlsb[0m[m
+drwxr-xr-x  2 root root  4096 Aug  5  2025 [01;34mman-db[0m[m
+drwxr-xr-x  3 root root  4096 Feb  4  2024 [01;34mmime[0m[m
+drwxr-xr-x  2 root root  4096 Aug 11 06:06 [01;34mmodprobe.d[0m[m
+drwxr-xr-x  4 root root  4096 Jul 10 11:44 [01;34mmodules[0m[m
+drwxr-xr-x  2 root root  4096 Dec  6  2025 [01;34mnetplan[0m[m
+drwxr-xr-x  8 root root  4096 Aug  5  2025 [01;34mnetworkd-dispatcher[0m[m
+drwxr-xr-x  5 root root  4096 Jan 18  2026 [01;34mnsight-compute[0m[m
+drwxr-xr-x  4 root root  4096 Jan 18  2026 [01;34mnsight-systems[0m[m
+drwxr-xr-x  5 root root  4096 Jan 18  2026 [01;34mnvidia-cuda-toolkit[0m[m
+drwxr-xr-x  3 root root  4096 Jan 18  2026 [01;34mnvidia-visual-profiler[0m[m
+drwxr-xr-x  2 root root  4096 Sep  5 06:09 [01;34mopenssh[0m[m
+-rw-r--r--  1 root root   400 Aug  1  2025 os-release[m
+drwxr-xr-x  2 root root  4096 Sep 18 06:10 [01;34mpam.d[0m[m
+[7msk-kvit-notes/c16d0b4f-409b-4a20-af7f-49035aa8d21e/scratchpad/vtdiff/lsout.txt[27m[K[Kdrwxr-xr-x  5 root root  4096 Aug 11 06:06 [01;34mpcrlock.d[0m[m
+drwxr-xr-x  2 root root  4096 Apr  8  2024 [01;34mpkgconfig[0m[m
+drwxr-xr-x  3 root root  4096 Aug  5  2025 [01;34mpm-utils[0m[m
+drwxr-xr-x  2 root root  4096 Sep 18 06:10 [01;34mpolicykit-1[0m[m
+drwxr-xr-x  2 root root  4096 Sep 18 06:10 [01;34mpolkit-1[0m[m
+drwxr-xr-x  3 root root  4096 Aug  5  2025 [01;34mpython3[0m[m
+drwxr-xr-x 34 root root 20480 Sep 11 06:08 [01;34mpython3.12[0m[m
+drwxr-xr-x  2 root root  4096 Sep 23 06:06 [01;34mrsyslog[0m[m
+drwxr-xr-x  2 root root  4096 Aug  8  2024 [01;34msasl2[0m[m
+drwxr-xr-x  2 root root  4096 Jul 23 06:03 [01;34msnapd[0m[m
+drwxr-xr-x  2 root root  4096 Nov  1  2025 [01;34msoftware-properties[0m[m
+drwxr-xr-x  3 root root  4096 Aug 27 06:04 [01;34mssl[0m[m
+:[K[K[?1l>

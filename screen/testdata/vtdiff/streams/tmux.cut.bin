@@ -1,0 +1,43 @@
+[?1049h[22;0;0t[?1h=[H[2J[?12l[?25h[?1000l[?1002l[?1003l[?1006l[?1005l[?2004h(B[m[?12l[?25h[?1006l[?1000l[?1002l[?1003l[1;1H[1;24r[c[>c[>q]10;?\]11;?\[1;1H[?25llrwxrwxrwx  1 root root          26 Dec  3  2025 [36m[1maddr2line(B[m -> [32m[1mx86_64-linux-gnu-addr2line(B[m[K
+-rwxr-xr-x  1 root root       22928 Apr  7  2024 [32m[1mambiguous_words(B[m[K
+-rwxr-xr-x  1 root root        2322 Apr 18  2024 [32m[1mapport-bug(B[m[K
+-rwxr-xr-x  1 root root       13625 Jul  8  2025 [32m[1mapport-cli(B[m[K
+lrwxrwxrwx  1 root root          10 Jul  8  2025 [36m[1mapport-collect(B[m -> [32m[1mapport-bug(B[m[K
+-rwxr-xr-x  1 root root        3790 Jul  8  2025 [32m[1mapport-unpack(B[m[K
+-rwxr-xr-x  1 root root       14648 Mar 31  2024 [32m[1mappres(B[m[K
+-rwxr-xr-x  1 root root      141544 Apr  8  2024 [32m[1mappstreamcli(B[m[K
+lrwxrwxrwx  1 root root           6 Apr  8  2024 [36m[1mapropos(B[m -> [32m[1mwhatis(B[m[K
+-rwxr-xr-x  1 root root       18824 Oct 22  2024 [32m[1mapt(B[m[K
+lrwxrwxrwx  1 root root          18 Jul  2  2025 [36m[1mapt-add-repository(B[m -> [32m[1madd-apt-repository(B[m[K
+-rwxr-xr-x  1 root root       88544 Oct 22  2024 [32m[1mapt-cache(B[m[K
+-rwxr-xr-x  1 root root       27104 Oct 22  2024 [32m[1mapt-cdrom(B[m[K
+-rwxr-xr-x  1 root root       31120 Oct 22  2024 [32m[1mapt-config(B[m[K
+-rwxr-xr-x  1 root root       23008 Oct 22  2024 [32m[1mapt-extracttemplates(B[m[K
+-rwxr-xr-x  1 root root      227816 Oct 22  2024 [32m[1mapt-ftparchive(B[m[K
+-rwxr-xr-x  1 root root       51680 Oct 22  2024 [32m[1mapt-get(B[m[K
+-rwxr-xr-x  1 root root       28664 Oct 22  2024 [32m[1mapt-key(B[m[K
+-rwxr-xr-x  1 root root       55776 Oct 22  2024 [32m[1mapt-mark(B[m[K
+-rwxr-xr-x  1 root root       51608 Oct 22  2024 [32m[1mapt-sortpkgs(B[m[K
+[K[30m[42m
+[43] 0:sleep*                                            "Aorus" 15:13 26-Sep-26(B[m[?12l[?25h[23;1H(B[m[?12l[?25h[?1006l[?1000l[?1002l[?1003l[1;1H[1;24r[23;1H[?25l[Hlrwxrwxrwx  1 root root          26 Dec  3  2025 [36m[1maddr2line(B[m -> [32m[1mx86_64-linux-gnu-addr2line(B[m[K
+-rwxr-xr-x  1 root root       22928 Apr  7  2024 [32m[1mambiguous_words(B[m[K
+-rwxr-xr-x  1 root root        2322 Apr 18  2024 [32m[1mapport-bug(B[m[K
+-rwxr-xr-x  1 root root       13625 Jul  8  2025 [32m[1mapport-cli(B[m[K
+lrwxrwxrwx  1 root root          10 Jul  8  2025 [36m[1mapport-collect(B[m -> [32m[1mapport-bug(B[m[K
+-rwxr-xr-x  1 root root        3790 Jul  8  2025 [32m[1mapport-unpack(B[m[K
+-rwxr-xr-x  1 root root       14648 Mar 31  2024 [32m[1mappres(B[m[K
+-rwxr-xr-x  1 root root      141544 Apr  8  2024 [32m[1mappstreamcli(B[m[K
+lrwxrwxrwx  1 root root           6 Apr  8  2024 [36m[1mapropos(B[m -> [32m[1mwhatis(B[m[K
+-rwxr-xr-x  1 root root       18824 Oct 22  2024 [32m[1mapt(B[m[K
+lrwxrwxrwx  1 root root          18 Jul  2  2025 [36m[1mapt-add-repository(B[m -> [32m[1madd-apt-repository(B[m[K
+-rwxr-xr-x  1 root root       88544 Oct 22  2024 [32m[1mapt-cache(B[m[K
+-rwxr-xr-x  1 root root       27104 Oct 22  2024 [32m[1mapt-cdrom(B[m[K
+-rwxr-xr-x  1 root root       31120 Oct 22  2024 [32m[1mapt-config(B[m[K
+-rwxr-xr-x  1 root root       23008 Oct 22  2024 [32m[1mapt-extracttemplates(B[m[K
+-rwxr-xr-x  1 root root      227816 Oct 22  2024 [32m[1mapt-ftparchive(B[m[K
+-rwxr-xr-x  1 root root       51680 Oct 22  2024 [32m[1mapt-get(B[m[K
+-rwxr-xr-x  1 root root       28664 Oct 22  2024 [32m[1mapt-key(B[m[K
+-rwxr-xr-x  1 root root       55776 Oct 22  2024 [32m[1mapt-mark(B[m[K
+-rwxr-xr-x  1 root root       51608 Oct 22  2024 [32m[1mapt-sortpkgs(B[m[K
+[K[30m[42m
+[43] 0:sleep*                                            "Aorus" 15:13 26-Sep-26(B[m[?12l[?25h[23;1H[1;24r(B[m[?1l>[H[2J[?12l[?25h[?1000l[?1002l[?1003l[?1006l[?1005l[?2004l[?7727l[?1004l

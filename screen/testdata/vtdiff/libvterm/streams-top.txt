@@ -1,0 +1,257 @@
+cursor 23 0
+R0 Tasks: 143 total,   1 running, 139 sleeping,   3 stopped,   0 zombie
+R1 %Cpu(s):  3.1 us,  0.9 sy,  0.0 ni, 95.2 id,  0.0 wa,  0.0 hi,  0.8 si,  0.0 st
+R2 MiB Mem :  32220.7 total,  21323.2 free,   4224.3 used,   7133.4 buff/cache
+R3 MiB Swap:  16384.0 total,  13970.4 free,   2413.6 used.  27996.3 avail Mem
+R4 
+R5     PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND
+R6 1731835 sk        20   0   20.1g 333764  35180 S  44.0   1.0  23:33.35 MainThr+
+R7  599593 sk        20   0   20.1g 347200  34640 S  40.0   1.1  26:11.75 MainThr+
+R8 1732762 sk        20   0 5620880 465408 107080 S   6.0   1.4   7:05.46 claude
+R9 2794487 sk        20   0 5690516 472064 134080 S   4.0   1.4   1:38.24 claude
+R10 3726520 sk        20   0 1578536  57896  20460 S   2.0   0.2   4:53.98 MainThr+
+R11 3727457 sk        20   0   20.1g 336776  32268 S   2.0   1.0  92:17.41 MainThr+
+R12       1 root      20   0   22460   6772   4056 S   0.0   0.0   0:46.45 systemd
+R13       2 root      20   0    3180    544    496 S   0.0   0.0   0:00.21 init-sy+
+R14      10 root      20   0    3328    616    492 S   0.0   0.0  14:00.28 init
+R15      43 root      19  -1   75040  11888  11444 S   0.0   0.0   0:20.65 systemd+
+R16      89 root      20   0   25408   1940   1424 S   0.0   0.0   0:14.92 systemd+
+R17     104 root      20   0  751060    632    508 S   0.0   0.0   0:02.99 snapfuse
+R18     105 root      20   0  751060    588    508 S   0.0   0.0   0:02.90 snapfuse
+R19     109 root      20   0  601532    652    584 S   0.0   0.0   0:00.43 snapfuse
+R20     112 root      20   0  676428    632    508 S   0.0   0.0   0:00.52 snapfuse
+R21     121 root      20   0  751192    580    508 S   0.0   0.0   0:03.05 snapfuse
+R22     122 root      20   0  676296    444    356 S   0.0   0.0   0:00.15 snapfuse
+R23 
+S0,6 d D b
+S0,7 d D b
+S0,8 d D b
+S0,9 d D b
+S0,10 d D b
+S0,17 d D b
+S0,18 d D b
+S0,19 d D b
+S0,20 d D b
+S0,21 d D b
+S0,30 d D b
+S0,31 d D b
+S0,32 d D b
+S0,33 d D b
+S0,34 d D b
+S0,44 d D b
+S0,45 d D b
+S0,46 d D b
+S0,47 d D b
+S0,48 d D b
+S0,57 d D b
+S0,58 d D b
+S0,59 d D b
+S0,60 d D b
+S0,61 d D b
+S1,8 d D b
+S1,9 d D b
+S1,10 d D b
+S1,11 d D b
+S1,12 d D b
+S1,13 d D b
+S1,17 d D b
+S1,18 d D b
+S1,19 d D b
+S1,20 d D b
+S1,21 d D b
+S1,22 d D b
+S1,26 d D b
+S1,27 d D b
+S1,28 d D b
+S1,29 d D b
+S1,30 d D b
+S1,31 d D b
+S1,35 d D b
+S1,36 d D b
+S1,37 d D b
+S1,38 d D b
+S1,39 d D b
+S1,40 d D b
+S1,44 d D b
+S1,45 d D b
+S1,46 d D b
+S1,47 d D b
+S1,48 d D b
+S1,49 d D b
+S1,53 d D b
+S1,54 d D b
+S1,55 d D b
+S1,56 d D b
+S1,57 d D b
+S1,58 d D b
+S1,62 d D b
+S1,63 d D b
+S1,64 d D b
+S1,65 d D b
+S1,66 d D b
+S1,67 d D b
+S1,71 d D b
+S1,72 d D b
+S1,73 d D b
+S1,74 d D b
+S1,75 d D b
+S1,76 d D b
+S2,9 d D b
+S2,10 d D b
+S2,11 d D b
+S2,12 d D b
+S2,13 d D b
+S2,14 d D b
+S2,15 d D b
+S2,16 d D b
+S2,17 d D b
+S2,18 d D b
+S2,25 d D b
+S2,26 d D b
+S2,27 d D b
+S2,28 d D b
+S2,29 d D b
+S2,30 d D b
+S2,31 d D b
+S2,32 d D b
+S2,33 d D b
+S2,34 d D b
+S2,40 d D b
+S2,41 d D b
+S2,42 d D b
+S2,43 d D b
+S2,44 d D b
+S2,45 d D b
+S2,46 d D b
+S2,47 d D b
+S2,48 d D b
+S2,49 d D b
+S2,55 d D b
+S2,56 d D b
+S2,57 d D b
+S2,58 d D b
+S2,59 d D b
+S2,60 d D b
+S2,61 d D b
+S2,62 d D b
+S2,63 d D b
+S2,64 d D b
+S3,9 d D b
+S3,10 d D b
+S3,11 d D b
+S3,12 d D b
+S3,13 d D b
+S3,14 d D b
+S3,15 d D b
+S3,16 d D b
+S3,17 d D b
+S3,18 d D b
+S3,25 d D b
+S3,26 d D b
+S3,27 d D b
+S3,28 d D b
+S3,29 d D b
+S3,30 d D b
+S3,31 d D b
+S3,32 d D b
+S3,33 d D b
+S3,34 d D b
+S3,40 d D b
+S3,41 d D b
+S3,42 d D b
+S3,43 d D b
+S3,44 d D b
+S3,45 d D b
+S3,46 d D b
+S3,47 d D b
+S3,48 d D b
+S3,49 d D b
+S3,55 d D b
+S3,56 d D b
+S3,57 d D b
+S3,58 d D b
+S3,59 d D b
+S3,60 d D b
+S3,61 d D b
+S3,62 d D b
+S3,63 d D b
+S3,64 d D b
+S5,0 d D r
+S5,1 d D r
+S5,2 d D r
+S5,3 d D r
+S5,4 d D r
+S5,5 d D r
+S5,6 d D r
+S5,7 d D r
+S5,8 d D r
+S5,9 d D r
+S5,10 d D r
+S5,11 d D r
+S5,12 d D r
+S5,13 d D r
+S5,14 d D r
+S5,15 d D r
+S5,16 d D r
+S5,17 d D r
+S5,18 d D r
+S5,19 d D r
+S5,20 d D r
+S5,21 d D r
+S5,22 d D r
+S5,23 d D r
+S5,24 d D r
+S5,25 d D r
+S5,26 d D r
+S5,27 d D r
+S5,28 d D r
+S5,29 d D r
+S5,30 d D r
+S5,31 d D r
+S5,32 d D r
+S5,33 d D r
+S5,34 d D r
+S5,35 d D r
+S5,36 d D r
+S5,37 d D r
+S5,38 d D r
+S5,39 d D r
+S5,40 d D r
+S5,41 d D r
+S5,42 d D r
+S5,43 d D r
+S5,44 d D r
+S5,45 d D r
+S5,46 d D r
+S5,47 d D r
+S5,48 d D r
+S5,49 d D r
+S5,50 d D r
+S5,51 d D r
+S5,52 d D r
+S5,53 d D r
+S5,54 d D r
+S5,55 d D r
+S5,56 d D r
+S5,57 d D r
+S5,58 d D r
+S5,59 d D r
+S5,60 d D r
+S5,61 d D r
+S5,62 d D r
+S5,63 d D r
+S5,64 d D r
+S5,65 d D r
+S5,66 d D r
+S5,67 d D r
+S5,68 d D r
+S5,69 d D r
+S5,70 d D r
+S5,71 d D r
+S5,72 d D r
+S5,73 d D r
+S5,74 d D r
+S5,75 d D r
+S5,76 d D r
+S5,77 d D r
+S5,78 d D r

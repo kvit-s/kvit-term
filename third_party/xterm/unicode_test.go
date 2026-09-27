@@ -103,7 +103,7 @@ func TestUnicodeServiceGetStringCellWidth(t *testing.T) {
 		{"fullwidth", "\uff21\uff22", 4},
 		{"control chars ignored", "\x00\x01\x02", 0},
 		{"tab and newline", "\t\n", 0},
-		{"emoji supplementary", "\U0001F600", 1}, // basic emoji (not in wide table for v6)
+		{"emoji supplementary", "\U0001F600", 2}, // wide in current Unicode (Kvit: was 1 with the Unicode 6 table)
 		{"CJK ext B string", "\U00020000", 2},
 	}
 	u := NewUnicodeService()

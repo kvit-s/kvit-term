@@ -77,6 +77,15 @@ func (bs *BufferSet) Reset() {
 	bs.SetupTabStops(-1)
 }
 
+// SetScrollback changes how many lines the normal buffer keeps above the
+// screen, dropping the oldest at once when it shrinks. Upstream fixes the
+// number when the buffers are made. (Kvit's addition; see KVIT-PATCH.md.)
+func (bs *BufferSet) SetScrollback(n int) {
+	bs.scrollback = n
+	bs.normal.scrollback = n
+	bs.normal.Resize(bs.normal.cols, bs.normal.rows)
+}
+
 // Normal returns the normal buffer.
 func (bs *BufferSet) Normal() *Buffer { return bs.normal }
 

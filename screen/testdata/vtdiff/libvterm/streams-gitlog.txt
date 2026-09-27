@@ -1,0 +1,97 @@
+cursor 23 0
+R0 |
+R1 |     Take the interface layer's quiet status bar
+R2 |
+R3 |     The shared bar wrote a QML warning for every fact whenever its groups were
+R4 |     replaced, which is often. Nothing this editor draws is affected: it import
+R5 s
+R6 |     Kvit rather than Kvit.Ui and draws no status bar of the library's, so the
+R7 |     pointer is all that moves here.
+R8 |
+R9 |     Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+R10 |     Claude-Session: https://claude.ai/code/session_01WTQKe2GxgUS6kNz1jupYiW
+R11 |
+R12 |  third_party/kvit-ui | 2 +-
+R13 |  1 file changed, 1 insertion(+), 1 deletion(-)
+R14 |
+R15 * commit 661a58f95a3a2f3f877cd6daef73b7cb0b26ccd9
+R16 | Author: kvit-s <info@kvit.app>
+R17 | Date:   Sun Sep 13 03:57:10 2026 -0500
+R18 |
+R19 |     Take the interface layer's status bar group placement
+R20 |
+R21 |  third_party/kvit-ui | 2 +-
+R22 |  1 file changed, 1 insertion(+), 1 deletion(-)
+R23 
+S0,0 i1 D -
+S1,0 i1 D -
+S2,0 i1 D -
+S3,0 i1 D -
+S4,0 i1 D -
+S6,0 i1 D -
+S7,0 i1 D -
+S8,0 i1 D -
+S9,0 i1 D -
+S10,0 i1 D -
+S11,0 i1 D -
+S12,0 i1 D -
+S12,27 i2 D -
+S12,28 i1 D -
+S13,0 i1 D -
+S14,0 i1 D -
+S15,2 i3 D -
+S15,3 i3 D -
+S15,4 i3 D -
+S15,5 i3 D -
+S15,6 i3 D -
+S15,7 i3 D -
+S15,8 i3 D -
+S15,9 i3 D -
+S15,10 i3 D -
+S15,11 i3 D -
+S15,12 i3 D -
+S15,13 i3 D -
+S15,14 i3 D -
+S15,15 i3 D -
+S15,16 i3 D -
+S15,17 i3 D -
+S15,18 i3 D -
+S15,19 i3 D -
+S15,20 i3 D -
+S15,21 i3 D -
+S15,22 i3 D -
+S15,23 i3 D -
+S15,24 i3 D -
+S15,25 i3 D -
+S15,26 i3 D -
+S15,27 i3 D -
+S15,28 i3 D -
+S15,29 i3 D -
+S15,30 i3 D -
+S15,31 i3 D -
+S15,32 i3 D -
+S15,33 i3 D -
+S15,34 i3 D -
+S15,35 i3 D -
+S15,36 i3 D -
+S15,37 i3 D -
+S15,38 i3 D -
+S15,39 i3 D -
+S15,40 i3 D -
+S15,41 i3 D -
+S15,42 i3 D -
+S15,43 i3 D -
+S15,44 i3 D -
+S15,45 i3 D -
+S15,46 i3 D -
+S15,47 i3 D -
+S15,48 i3 D -
+S16,0 i1 D -
+S17,0 i1 D -
+S18,0 i1 D -
+S19,0 i1 D -
+S20,0 i1 D -
+S21,0 i1 D -
+S21,27 i2 D -
+S21,28 i1 D -
+S22,0 i1 D -

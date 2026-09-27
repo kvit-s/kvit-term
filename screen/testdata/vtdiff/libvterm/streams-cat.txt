@@ -1,0 +1,25 @@
+cursor 23 0
+R0 …) show an
+R1   "unsupported family" diagnostic over editable source rather than a blank block
+R2 . Parsing and
+R3   layout run off the UI thread with an LRU cache; identical source, font, and di
+R4 rection
+R5   produce an identical scene. Read state shows the rendered diagram fit to the v
+R6 isible
+R7   window in both dimensions (a diagram taller than the 720 px read window scales
+R8  down rather
+R9   than clipping), with hover zoom controls, the current zoom level indicated bot
+R10 tom-right,
+R11   and panning when zoomed in past the window; a per-block **PNG** control saves
+R12 the scene as
+R13   a 2× raster on the theme background. Focus shows the source plus a debounced l
+R14 ive preview
+R15   that keeps the last valid render while the new source is invalid, with a line/
+R16 column
+R17   diagnostic. The source editor is syntax-coloured through the same scanners and
+R18  the same
+R19   five theme tokens a code block is coloured with (§1.2.7), covering `%%` commen
+R20 ts and
+R21   `%%{…}%%` directives, diagram and statement keywords, layout directions, link
+R22 runs, and
+R23 

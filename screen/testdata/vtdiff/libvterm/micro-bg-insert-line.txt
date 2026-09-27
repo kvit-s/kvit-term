@@ -1,0 +1,105 @@
+cursor 1 0
+R0 x
+R1 
+R2 x
+R3 x
+R4 
+R5 
+R6 
+R7 
+R8 
+R9 
+R10 
+R11 
+R12 
+R13 
+R14 
+R15 
+R16 
+R17 
+R18 
+R19 
+R20 
+R21 
+R22 
+R23 
+S1,0 d i4 -
+S1,1 d i4 -
+S1,2 d i4 -
+S1,3 d i4 -
+S1,4 d i4 -
+S1,5 d i4 -
+S1,6 d i4 -
+S1,7 d i4 -
+S1,8 d i4 -
+S1,9 d i4 -
+S1,10 d i4 -
+S1,11 d i4 -
+S1,12 d i4 -
+S1,13 d i4 -
+S1,14 d i4 -
+S1,15 d i4 -
+S1,16 d i4 -
+S1,17 d i4 -
+S1,18 d i4 -
+S1,19 d i4 -
+S1,20 d i4 -
+S1,21 d i4 -
+S1,22 d i4 -
+S1,23 d i4 -
+S1,24 d i4 -
+S1,25 d i4 -
+S1,26 d i4 -
+S1,27 d i4 -
+S1,28 d i4 -
+S1,29 d i4 -
+S1,30 d i4 -
+S1,31 d i4 -
+S1,32 d i4 -
+S1,33 d i4 -
+S1,34 d i4 -
+S1,35 d i4 -
+S1,36 d i4 -
+S1,37 d i4 -
+S1,38 d i4 -
+S1,39 d i4 -
+S1,40 d i4 -
+S1,41 d i4 -
+S1,42 d i4 -
+S1,43 d i4 -
+S1,44 d i4 -
+S1,45 d i4 -
+S1,46 d i4 -
+S1,47 d i4 -
+S1,48 d i4 -
+S1,49 d i4 -
+S1,50 d i4 -
+S1,51 d i4 -
+S1,52 d i4 -
+S1,53 d i4 -
+S1,54 d i4 -
+S1,55 d i4 -
+S1,56 d i4 -
+S1,57 d i4 -
+S1,58 d i4 -
+S1,59 d i4 -
+S1,60 d i4 -
+S1,61 d i4 -
+S1,62 d i4 -
+S1,63 d i4 -
+S1,64 d i4 -
+S1,65 d i4 -
+S1,66 d i4 -
+S1,67 d i4 -
+S1,68 d i4 -
+S1,69 d i4 -
+S1,70 d i4 -
+S1,71 d i4 -
+S1,72 d i4 -
+S1,73 d i4 -
+S1,74 d i4 -
+S1,75 d i4 -
+S1,76 d i4 -
+S1,77 d i4 -
+S1,78 d i4 -
+S1,79 d i4 -

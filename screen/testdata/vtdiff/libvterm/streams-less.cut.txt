@@ -1,0 +1,250 @@
+cursor 23 0
+R0 drwxr-xr-x  2 root root  4096 Aug 11 06:06 modprobe.d
+R1 drwxr-xr-x  4 root root  4096 Jul 10 11:44 modules
+R2 drwxr-xr-x  2 root root  4096 Dec  6  2025 netplan
+R3 drwxr-xr-x  8 root root  4096 Aug  5  2025 networkd-dispatcher
+R4 drwxr-xr-x  5 root root  4096 Jan 18  2026 nsight-compute
+R5 drwxr-xr-x  4 root root  4096 Jan 18  2026 nsight-systems
+R6 drwxr-xr-x  5 root root  4096 Jan 18  2026 nvidia-cuda-toolkit
+R7 drwxr-xr-x  3 root root  4096 Jan 18  2026 nvidia-visual-profiler
+R8 drwxr-xr-x  2 root root  4096 Sep  5 06:09 openssh
+R9 -rw-r--r--  1 root root   400 Aug  1  2025 os-release
+R10 drwxr-xr-x  2 root root  4096 Sep 18 06:10 pam.d
+R11 drwxr-xr-x  5 root root  4096 Aug 11 06:06 pcrlock.d
+R12 drwxr-xr-x  2 root root  4096 Apr  8  2024 pkgconfig
+R13 drwxr-xr-x  3 root root  4096 Aug  5  2025 pm-utils
+R14 drwxr-xr-x  2 root root  4096 Sep 18 06:10 policykit-1
+R15 drwxr-xr-x  2 root root  4096 Sep 18 06:10 polkit-1
+R16 drwxr-xr-x  3 root root  4096 Aug  5  2025 python3
+R17 drwxr-xr-x 34 root root 20480 Sep 11 06:08 python3.12
+R18 drwxr-xr-x  2 root root  4096 Sep 23 06:06 rsyslog
+R19 drwxr-xr-x  2 root root  4096 Aug  8  2024 sasl2
+R20 drwxr-xr-x  2 root root  4096 Jul 23 06:03 snapd
+R21 drwxr-xr-x  2 root root  4096 Nov  1  2025 software-properties
+R22 drwxr-xr-x  3 root root  4096 Aug 27 06:04 ssl
+R23 
+S0,43 i4 D b
+S0,44 i4 D b
+S0,45 i4 D b
+S0,46 i4 D b
+S0,47 i4 D b
+S0,48 i4 D b
+S0,49 i4 D b
+S0,50 i4 D b
+S0,51 i4 D b
+S0,52 i4 D b
+S1,43 i4 D b
+S1,44 i4 D b
+S1,45 i4 D b
+S1,46 i4 D b
+S1,47 i4 D b
+S1,48 i4 D b
+S1,49 i4 D b
+S2,43 i4 D b
+S2,44 i4 D b
+S2,45 i4 D b
+S2,46 i4 D b
+S2,47 i4 D b
+S2,48 i4 D b
+S2,49 i4 D b
+S3,43 i4 D b
+S3,44 i4 D b
+S3,45 i4 D b
+S3,46 i4 D b
+S3,47 i4 D b
+S3,48 i4 D b
+S3,49 i4 D b
+S3,50 i4 D b
+S3,51 i4 D b
+S3,52 i4 D b
+S3,53 i4 D b
+S3,54 i4 D b
+S3,55 i4 D b
+S3,56 i4 D b
+S3,57 i4 D b
+S3,58 i4 D b
+S3,59 i4 D b
+S3,60 i4 D b
+S3,61 i4 D b
+S4,43 i4 D b
+S4,44 i4 D b
+S4,45 i4 D b
+S4,46 i4 D b
+S4,47 i4 D b
+S4,48 i4 D b
+S4,49 i4 D b
+S4,50 i4 D b
+S4,51 i4 D b
+S4,52 i4 D b
+S4,53 i4 D b
+S4,54 i4 D b
+S4,55 i4 D b
+S4,56 i4 D b
+S5,43 i4 D b
+S5,44 i4 D b
+S5,45 i4 D b
+S5,46 i4 D b
+S5,47 i4 D b
+S5,48 i4 D b
+S5,49 i4 D b
+S5,50 i4 D b
+S5,51 i4 D b
+S5,52 i4 D b
+S5,53 i4 D b
+S5,54 i4 D b
+S5,55 i4 D b
+S5,56 i4 D b
+S6,43 i4 D b
+S6,44 i4 D b
+S6,45 i4 D b
+S6,46 i4 D b
+S6,47 i4 D b
+S6,48 i4 D b
+S6,49 i4 D b
+S6,50 i4 D b
+S6,51 i4 D b
+S6,52 i4 D b
+S6,53 i4 D b
+S6,54 i4 D b
+S6,55 i4 D b
+S6,56 i4 D b
+S6,57 i4 D b
+S6,58 i4 D b
+S6,59 i4 D b
+S6,60 i4 D b
+S6,61 i4 D b
+S7,43 i4 D b
+S7,44 i4 D b
+S7,45 i4 D b
+S7,46 i4 D b
+S7,47 i4 D b
+S7,48 i4 D b
+S7,49 i4 D b
+S7,50 i4 D b
+S7,51 i4 D b
+S7,52 i4 D b
+S7,53 i4 D b
+S7,54 i4 D b
+S7,55 i4 D b
+S7,56 i4 D b
+S7,57 i4 D b
+S7,58 i4 D b
+S7,59 i4 D b
+S7,60 i4 D b
+S7,61 i4 D b
+S7,62 i4 D b
+S7,63 i4 D b
+S7,64 i4 D b
+S8,43 i4 D b
+S8,44 i4 D b
+S8,45 i4 D b
+S8,46 i4 D b
+S8,47 i4 D b
+S8,48 i4 D b
+S8,49 i4 D b
+S10,43 i4 D b
+S10,44 i4 D b
+S10,45 i4 D b
+S10,46 i4 D b
+S10,47 i4 D b
+S11,43 i4 D b
+S11,44 i4 D b
+S11,45 i4 D b
+S11,46 i4 D b
+S11,47 i4 D b
+S11,48 i4 D b
+S11,49 i4 D b
+S11,50 i4 D b
+S11,51 i4 D b
+S12,43 i4 D b
+S12,44 i4 D b
+S12,45 i4 D b
+S12,46 i4 D b
+S12,47 i4 D b
+S12,48 i4 D b
+S12,49 i4 D b
+S12,50 i4 D b
+S12,51 i4 D b
+S13,43 i4 D b
+S13,44 i4 D b
+S13,45 i4 D b
+S13,46 i4 D b
+S13,47 i4 D b
+S13,48 i4 D b
+S13,49 i4 D b
+S13,50 i4 D b
+S14,43 i4 D b
+S14,44 i4 D b
+S14,45 i4 D b
+S14,46 i4 D b
+S14,47 i4 D b
+S14,48 i4 D b
+S14,49 i4 D b
+S14,50 i4 D b
+S14,51 i4 D b
+S14,52 i4 D b
+S14,53 i4 D b
+S15,43 i4 D b
+S15,44 i4 D b
+S15,45 i4 D b
+S15,46 i4 D b
+S15,47 i4 D b
+S15,48 i4 D b
+S15,49 i4 D b
+S15,50 i4 D b
+S16,43 i4 D b
+S16,44 i4 D b
+S16,45 i4 D b
+S16,46 i4 D b
+S16,47 i4 D b
+S16,48 i4 D b
+S16,49 i4 D b
+S17,43 i4 D b
+S17,44 i4 D b
+S17,45 i4 D b
+S17,46 i4 D b
+S17,47 i4 D b
+S17,48 i4 D b
+S17,49 i4 D b
+S17,50 i4 D b
+S17,51 i4 D b
+S17,52 i4 D b
+S18,43 i4 D b
+S18,44 i4 D b
+S18,45 i4 D b
+S18,46 i4 D b
+S18,47 i4 D b
+S18,48 i4 D b
+S18,49 i4 D b
+S19,43 i4 D b
+S19,44 i4 D b
+S19,45 i4 D b
+S19,46 i4 D b
+S19,47 i4 D b
+S20,43 i4 D b
+S20,44 i4 D b
+S20,45 i4 D b
+S20,46 i4 D b
+S20,47 i4 D b
+S21,43 i4 D b
+S21,44 i4 D b
+S21,45 i4 D b
+S21,46 i4 D b
+S21,47 i4 D b
+S21,48 i4 D b
+S21,49 i4 D b
+S21,50 i4 D b
+S21,51 i4 D b
+S21,52 i4 D b
+S21,53 i4 D b
+S21,54 i4 D b
+S21,55 i4 D b
+S21,56 i4 D b
+S21,57 i4 D b
+S21,58 i4 D b
+S21,59 i4 D b
+S21,60 i4 D b
+S21,61 i4 D b
+S22,43 i4 D b
+S22,44 i4 D b
+S22,45 i4 D b

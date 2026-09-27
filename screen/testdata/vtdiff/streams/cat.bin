@@ -1,0 +1,300 @@
+# Kvit Notes — feature specification
+
+This is the behaviour specification for Kvit Notes, a native block editor for
+Markdown notes built on Qt 6 and QML. A note is stored as an ordinary `.md` file
+and shown fully rendered, with the raw markdown of a span revealed only while the
+cursor is inside it. The sections below state, feature by feature, what the
+application is specified to do: the block system and the twenty-one block kinds,
+text editing and formatting, the notes collection, the user interface, and the
+platform integration around them.
+
+Four documents divide this ground up, because they answer different questions and
+go stale at different rates:
+
+- **This document** states intended behaviour.
+- **[usage.md](usage.md)** explains how to use the application, and is the better
+  starting point for a reader who has not run it yet.
+- **[docs/backlog.md](docs/backlog.md)** records the known differences between this
+  specification and what the code does today, so that no paragraph here has to
+  hedge about whether it is already shipped.
+- **[docs/adr/](docs/adr/)** holds the decisions the code is constrained by, and
+  **[devel.md](devel.md)** covers building, debugging and testing.
+
+---
+
+## 1. Block System
+
+### 1.1 Core Block Concept
+- Each piece of content (text, image, heading, etc.) is an independent, self-contained block
+- Blocks can be individually selected, moved, deleted, and transformed
+- Blocks maintain their own state and rendering logic
+- Blocks can be nested within other blocks (indentation hierarchy)
+- Each block has a unique identifier for reference and manipulation
+- Blocks can be collapsed/expanded when they contain nested content
+
+### 1.2 Block Types
+
+#### 1.2.1 Text Block (Paragraph)
+- Default block type for regular text content
+- Supports inline formatting (bold, italic, underline, strikethrough, code)
+- Supports inline links with URL and display text
+- Auto-continuation: pressing Enter creates a new text block
+- Empty text blocks can be converted to other types via slash commands
+- Support for text alignment (left, center, right, justify)
+
+#### 1.2.2 Heading Blocks
+- **Heading 1**: Largest heading, typically for document titles
+- **Heading 2**: Section headings
+- **Heading 3**: Subsection headings
+- **Heading 4**: Minor headings
+- Each heading level has distinct font size and weight
+- Headings contribute to document outline/table of contents generation
+- Pressing Enter at end of heading creates a new paragraph block
+
+#### 1.2.3 Todo/Checkbox Block
+- Checkbox element at the beginning of the block
+- Clicking checkbox toggles completion state
+- Completed items show strikethrough text styling
+- Support for due dates attached to todo items
+- Support for priority levels (high, medium, low)
+- Keyboard shortcut to toggle checkbox state
+- Indented todos create sub-tasks with parent-child relationship
+- Progress indicator showing completed/total sub-tasks
+
+#### 1.2.4 Bulleted List Block
+- Bullet point marker at the beginning
+- Pressing Enter creates new list item at same level
+- Pressing Tab indents to create nested list item
+- Pressing Shift+Tab outdents list item
+- Pressing Enter on empty list item exits list mode
+- Different bullet styles for different nesting levels (disc, circle, square)
+
+#### 1.2.5 Numbered List Block
+- Sequential numbering at the beginning
+- Auto-numbering updates when items are added, removed, or reordered
+- Support for different numbering styles (1,2,3 / a,b,c / i,ii,iii)
+- Nested numbered lists restart numbering or continue based on settings
+- Same indentation behavior as bulleted lists
+
+#### 1.2.6 Quote Block
+- Visual indicator (vertical bar, background color, or both)
+- Italic or distinct text styling
+- Support for attribution line
+- Can contain multiple paragraphs within single quote block
+- Nested quotes for multi-level quotation
+
+#### 1.2.7 Code Block
+- Monospace font rendering
+- Syntax highlighting for common programming languages
+- Language selector dropdown
+- Line numbers (optional, toggleable)
+- Copy code button
+- Horizontal scrolling for long lines
+- Preserve whitespace and indentation exactly as entered
+- Enter inserts a newline, blank lines included, and carries the current line's
+  indentation onto the new one; Ctrl+Enter leaves the block and starts a
+  paragraph below, named in the block's bottom-right corner while the caret is
+  inside, opposite the copy button
+- Tab indents to the next four-column stop and Shift+Tab takes one stop back;
+  with lines selected both work on every line the selection touches.
+  Indentation is written as spaces, never as tab characters
+- Support for common languages: Python, JavaScript, C++, Java, HTML, CSS, SQL, Bash, JSON, XML, Markdown
+
+#### 1.2.8 Image Block
+- Display images inline within document
+- Support for common formats: PNG, JPG, JPEG, GIF, WebP, SVG, BMP
+- Resize handles for adjusting image dimensions
+- Maintain aspect ratio option when resizing
+- Alignment options (left, center, right)
+- Caption text below image, wrapping to the image's width; Shift+Enter adds a
+  line to it and Enter leaves for a new block below
+- Alt text for accessibility
+- Click to view full-size in lightbox/modal
+- Lazy loading for performance with many images
+- Drag and drop image files from file system
+- Drag and drop images from web browsers
+- Paste images from clipboard
+- Image effects: rounded corners, shadow, border
+- While the block has focus, a panel under it edits the path (with a Browse…
+  button) and the alt text. Enter or leaving a field writes it as one undo
+  step, and Escape puts back what the block holds. A broken picture opens the
+  same panel, which is how its path gets repaired. An application embedding
+  the editor as a message box turns the panel off with `showImageEditPanel`
+- A path starting with `/` names a file at a website's root, as Hugo writes
+  `/images/a.png` for `static/images/a.png`. It is looked up in the vault's
+  site folder: `static` in a folder with `hugo.toml` (or `config.toml` beside
+  `content/`), otherwise the vault folder itself
+- Each vault chooses its site folder and the folder new pictures are saved in
+  (default `assets`, or `<site folder>/images`) on the "This vault" page of
+  Settings, stored in `<vault>/.kvit/settings.json`. A picture saved inside
+  the site folder is written from `/`. The edit panel names the site folder
+  and links to that page; an application embedding the editor shows the link
+  only when it sets `offersImageSettings`
+
+#### 1.2.9 Divider/Separator Block
+- Horizontal line to visually separate content sections
+- Multiple styles: solid line, dashed line, dotted line, decorative
+- Adjustable thickness and color
+- Full-width or partial-width options
+
+#### 1.2.10 Callout/Alert Block
+- Highlighted block for important information
+- Different types: info, warning, success, error, tip, note
+- Icon associated with each type
+- The type is chosen from the header: the icon opens a list of the kinds, and
+  picking one keeps the body, title, fold state and any custom colour
+- Enter leaves the callout for a new block, splitting the body when the caret
+  is inside it; Shift+Enter adds a line to the body; Ctrl+Enter folds it
+- Customizable background color
+- Can contain multiple paragraphs and other inline content
+
+#### 1.2.11 Table Block
+- Grid of cells organized in rows and columns
+- Add/remove rows and columns
+- Resize column widths by dragging borders
+- Header row with distinct styling
+- Cell text alignment (left, center, right)
+- Merge cells horizontally or vertically
+- Sort by column (ascending/descending)
+- Tab to move between cells. The arrow keys move within the cell's text and
+  cross to the next cell at its edge: Up and Down along the column from the
+  cell's first and last line, Left and Right along the row from the two ends
+  of the text, wrapping to the next or previous row and leaving the table at
+  the grid's own edges
+- Enter is done with a cell's value and moves down the column, as Down does;
+  Shift+Enter breaks a line inside the cell; Ctrl+Enter makes a new block
+  below the table, which the hint under the grid names while a cell is live
+- Dragging from one cell to another selects the rectangle of cells between
+  them. Ctrl+C copies that rectangle as a table of its own — the selected
+  cells under the header cells of the columns they came from, since markdown
+  has no notation for part of a table — Ctrl+X copies and empties it,
+  Backspace or Delete empties it, and Escape or a click into a cell drops it.
+  The same two commands are on the right-click menu while cells are selected.
+  A selection and a live cell are exclusive: one ends the other
+- Support for inline formatting within cells
+- Multi-line cells: Shift+Enter breaks a line inside a cell, stored as `<br>`
+  so the row stays one line of the file. A code fence an LLM opened inside a
+  row is folded into its cell and keeps its lines and indentation
+
+#### 1.2.12 Kanban/Task Board Block
+- Multiple columns representing workflow stages
+- Cards within each column representing tasks
+- Drag and drop cards between columns
+- Drag and drop to reorder cards within columns
+- Drag and drop to reorder columns, and left/right controls that do the same
+  without a pointer gesture
+- Add new columns; rename a column by clicking its name; delete a column with
+  its cards (undoable, so no confirmation)
+- Add new cards to any column, which open their editor empty rather than
+  arriving named "New card"
+- Card content: title, description, labels, due date. A card is edited in
+  place, not in a dialog: clicking its text opens an editor on the card's own
+  line, where `#label` and `📅 YYYY-MM-DD` are written as the file holds them,
+  and clicking under it opens one on the description
+- A strip under the title holds the card's labels and its due date, and is
+  where both are set: a chip adds a label, offering the labels the board
+  already uses so one can be reused rather than retyped, and another opens a
+  calendar for the due date. Each label chip removes itself
+- Cards record the day they were added and the day they were last changed,
+  shown at the foot of the card. The two dates ride in an HTML comment at the
+  end of the card's line, so they stay out of the text being edited and out of
+  every other markdown tool's way, and a card written before they were kept
+  says only what it knows
+- Card descriptions are shown on the card, hold as many lines as they are
+  given (Shift+Enter breaks a line), and render inline math and
+  `[[wiki-links]]` as the prose blocks do
+- A card-details popover for the structured fields (the labels, and the due
+  date the storage grammar is strict about), plus "Move to column" and
+  "Delete card", reached from the card's context menu
+- Column headers with card count, a collapse triangle, and controls that
+  highlight and name themselves under the pointer
+- Collapse/expand columns
+- Color-coded labels/tags on cards
+- Filter cards by label or status: a chip row above the board narrows it to
+  one label or hides finished cards. The cards that do not match leave the
+  columns rather than dimming, the column counts read "2 of 5", and a line
+  beside the chips says how much of the board is showing
+
+#### 1.2.13 Toggle/Collapsible Block
+- Header text always visible
+- Expandable/collapsible content section
+- Click header or arrow icon to toggle
+- Remember expanded/collapsed state
+- ~~Can contain any other block types within collapsed content~~ *(declined
+  2026-07-18: a toggle body is a single block's text — multiple paragraphs
+  work, nested code blocks/tables/lists do not)*
+- Keyboard shortcut to toggle
+
+#### 1.2.14 Embed Block
+- Embed external content via URL
+- Support for video embeds (YouTube, Vimeo)
+- Support for audio embeds *(served by the media path, not an embed player
+  card — `isEmbedUrl` excludes recognized media extensions by design;
+  player-card variant declined 2026-07-18)*
+- ~~Support for document embeds (PDF viewer)~~ *(declined 2026-07-18)*
+- Configurable dimensions
+- Fallback display when embed fails to load
+
+#### 1.2.15 Math/Equation Block
+- LaTeX syntax support for mathematical notation
+- Inline math within text blocks
+- Block-level equations for complex formulas
+- Real-time preview of rendered equation
+- Equation numbering option
+- Math entry assistance: typing `$` in prose auto-pairs
+  the closing `$` with the caret between (forward Delete keeps a literal
+  dollar; Backspace on the empty pair removes both; a second `$` types
+  over the closer); typing `\` in a math context opens the command menu —
+  a browsable, LyX-toolbar-style category panel with rendered glyphs on a
+  bare `\`, collapsing into ranked autocompletion as letters follow.
+  Accepting inserts the command's template with the caret in its first
+  empty slot; Tab hops between slots; Ctrl+Space re-triggers completion
+  for the backslash-word at the caret
+- In a block equation Enter is a line break, since an `aligned` or `cases`
+  body is several lines of TeX; Ctrl+Enter leaves the block and starts a
+  paragraph below, named in the block's bottom-right corner while the source
+  is open, the same as in a code block
+
+#### 1.2.16 Drop Cap Block
+- Enlarged first letter spanning multiple lines
+- Customizable number of lines to span
+- Font and color customization for drop cap letter *(via the `dropcapfont`/
+  `dropcapcolor` markdown attributes only; a UI for setting them declined
+  2026-07-18)*
+- Text wraps around the drop cap *(approximated: the inset applies to the
+  whole block, not only the first N lines — QQuickTextEdit limitation;
+  exact wrap declined 2026-07-18. Drop cap is also not preserved in
+  HTML/PDF export — declined 2026-07-18)*
+
+#### 1.2.17 Diagram Blocks
+Two diagram families, both stored as ordinary fenced code so Markdown remains the
+source of truth and round-trips through other editors.
+
+- **Mermaid diagram** — a ` ```mermaid ` fence rendered natively (no browser, JavaScript,
+  Node, or network dependency inside the app). Kvit renders a documented Mermaid-compatible
+  subset of five families, each parser built grammar-first against the Jison grammars of the
+  pinned export version `mermaid@11.16.0`:
+
+  | Family | Native support |
+  |---|---|
+  | Flowchart / graph (also `flowchart-elk`) | `TB`/`TD`/`BT`/`LR`/`RL` (and `>` `<` `^` `v`) directions; every flow.jison vertex shape — rectangle, rounded, stadium, circle, double circle, ellipse, rhombus, hexagon, cylinder, subroutine, both parallelograms, both trapezoids, odd/flag — plus `@{ shape: …, label: … }` shape data; solid/dotted/thick, labelled, chained, `A & B` lists, `e1@` edge ids, `~~~` invisible links; subgraphs with multi-word titles and local direction; `classDef`/`class`/`style`/`:::` safe styling; markdown-string labels; `accTitle`/`accDescr` (incl. multiline); LaTeX node and edge labels (`A["$$\frac{a}{b}$$"]`, Mermaid's `$$` delimiter) typeset natively |
+  | Sequence | participants/actors with aliases, every arrow form (open/filled/cross/async-point heads, dotted, bidirectional), `+`/`-` activation shorthand and `activate`/`deactivate`, notes (left of/right of/over pairs), `loop`/`alt`-`else`/`opt`/`par`-`and`/`critical`-`option`/`break`/`rect` fragments, `box` participant groups with colors, `autonumber`, titles, `#code;` entity escapes; LaTeX participant, message and note labels typeset natively |
+  | Class | classes with labels, backquoted names, `~T~` generics; member/method compartments as text; extension/composition/aggregation/dependency/lollipop ends on solid or dotted lines with cardinalities and labels; `<<annotations>>`; one-level namespaces; notes; direction; safe styling |
+  | State (`stateDiagram`/`-v2`) | transitions with labels, `[*]` start/end scoped per composite, long descriptions (`state "…" as id`, `id : text`), composite states (nested), `<<fork>>`/`<<join>>`/`<<choice>>`, notes (single-line, `end note` blocks, floating), direction, safe styling |
+  | ER | entities (quoted names, `NAME["alias"]`), attribute tables with types/keys (PK/FK/UK)/comments, every cardinality spelling (crow's-foot symbol pairs and the verbose `one or more` forms), identifying vs non-identifying lines, relationship roles, direction, safe styling |
+
+  Restricted syntax — interactivity (`click`/`href`/callbacks/links), participant/actor
+  config blocks, `create`/`destroy` lifecycles, central `()` connections, `linkStyle`,
+  `scale`, node properties, and unknown `@{…}` keys — is retained with a warning, never an
+  unrecognized-token failure. Deferred families (gantt, pie, mindmap, timeline, …) show an
+  "unsupported family" diagnostic over editable source rather than a blank block. Parsing and
+  layout run off the UI thread with an LRU cache; identical source, font, and direction
+  produce an identical scene. Read state shows the rendered diagram fit to the visible
+  window in both dimensions (a diagram taller than the 720 px read window scales down rather
+  than clipping), with hover zoom controls, the current zoom level indicated bottom-right,
+  and panning when zoomed in past the window; a per-block **PNG** control saves the scene as
+  a 2× raster on the theme background. Focus shows the source plus a debounced live preview
+  that keeps the last valid render while the new source is invalid, with a line/column
+  diagnostic. The source editor is syntax-coloured through the same scanners and the same
+  five theme tokens a code block is coloured with (§1.2.7), covering `%%` comments and
+  `%%{…}%%` directives, diagram and statement keywords, layout directions, link runs, and

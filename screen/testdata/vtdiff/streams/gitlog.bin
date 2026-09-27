@@ -1,0 +1,1084 @@
+* [33mcommit 918f539fecff1877ac500acc4d33c49345333888[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+[31m|[m Author: kvit-s <info@kvit.app>
+[31m|[m Date:   Fri Sep 25 23:54:22 2026 -0500
+[31m|[m 
+[31m|[m     Keep a paragraph's words in place when it becomes an editor
+[31m|[m     
+[31m|[m     A paragraph or heading is drawn as plain text (TextBlockDelegate's
+[31m|[m     readOnlyText) until something needs the editing engine, and by the
+[31m|[m     engine's text area from then on. The plain text started its words at
+[31m|[m     gutterInset + 13 from the row's edge, which is not where the text area
+[31m|[m     puts them: that is the strip beside the row (BlockGutter, forty pixels
+[31m|[m     when drawn), the focus bar at rest (three), the content column's margin
+[31m|[m     (eight) and the left padding Fusion gives a TextArea (ten). Measured in
+[31m|[m     the note, a press moved a paragraph's words from x 549 to 553 and
+[31m|[m     narrowed its column from 177 to 173 pixels, which can re-wrap its
+[31m|[m     lines; in a document drawn read-only the difference was eight pixels,
+[31m|[m     so every paragraph with bold, a link or a mark on it, which is an
+[31m|[m     editor from the start, sat to the right of its plain neighbours. The
+[31m|[m     plain text now starts at wordsLeft, the sum of the same four; its right
+[31m|[m     edge already matched.
+[31m|[m     
+[31m|[m     tests/test_documentview.cpp's
+[31m|[m     aParagraphsWordsStayPutWhenItBecomesAnEditor measures a note paragraph
+[31m|[m     and heading before and after they become editors, and a plain paragraph
+[31m|[m     beside a marked-up one in a drawn document, and fails without the
+[31m|[m     change. DocumentViewTests and the rest of the non-interactive suite
+[31m|[m     pass offscreen, apart from two PerformanceOpsTests budgets (vault scan,
+[31m|[m     journal write) that do not load the interface; IntegrationTestsIsolated
+[31m|[m     and VisualTests pass under VNC.
+[31m|[m     
+[31m|[m     Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+[31m|[m     Claude-Session: https://claude.ai/code/session_01LWqh6F4CrzXVvhQVbfNJuN
+[31m|[m 
+[31m|[m  CHANGELOG.md                |  12 [32m++++[m
+[31m|[m  qml/TextBlockDelegate.qml   |  15 [32m++++[m[31m-[m
+[31m|[m  tests/test_documentview.cpp | 119 [32m++++++++++++++++++++++++++++++++++[m
+[31m|[m  3 files changed, 145 insertions(+), 1 deletion(-)
+[31m|[m 
+* [33mcommit 51c49e0bb4a7f37d4456b5ba3fd069e92f1c08a3[m
+[31m|[m Author: kvit-s <info@kvit.app>
+[31m|[m Date:   Fri Sep 25 14:07:07 2026 -0500
+[31m|[m 
+[31m|[m     Let a read-only document scroll itself, and select on the first drag
+[31m|[m     
+[31m|[m     A document drawn read-only (qml/DocumentView.qml) was always as tall as
+[31m|[m     all of its blocks, so a host could scroll it inside a pane of its own.
+[31m|[m     Every block inside the list's own height is a block the list builds, so a
+[31m|[m     long document built all of them: over 1,237 blocks of this repository's
+[31m|[m     own documentation, measured offscreen, opening took 3.8 s and a wheel step
+[31m|[m     16.5 ms, where the note's editor, which builds only the rows on screen,
+[31m|[m     took 0.16 s and 2.0 ms. `growsWithDocument`, true by default, now says
+[31m|[m     which of the two a host wants. Set to false, the surface is as tall as its
+[31m|[m     host makes it and scrolls the document with the editor's own list, scroll
+[31m|[m     bar and wheel handling: 0.18 s to open and 1.7 ms a step over the same
+[31m|[m     document. The backup dialog's preview scrolls its stored version this way.
+[31m|[m     
+[31m|[m     The first drag over a paragraph of plain prose selects. Such a paragraph
+[31m|[m     is drawn as plain text until something needs the editing engine, and a
+[31m|[m     press is what does, so the row became an editor under the pointer while
+[31m|[m     the press went to the plain text; the text area that selects never saw
+[31m|[m     it, and the drag selected nothing until a second attempt. The row now
+[31m|[m     keeps the press, selects between the press and the pointer in the editor
+[31m|[m     that replaced it (EditableBlock.selectBetweenScenePoints), and reports the
+[31m|[m     drag to the cross-block coordinator as the text area's own press observer
+[31m|[m     would, correcting the anchor to the character the editor hit-tests once
+[31m|[m     it exists. A drag carried on into the next block becomes a range anchored
+[31m|[m     where the press was. It is the same in the note and in a drawn document,
+[31m|[m     and a host drawing one no longer needs to promote the row under the
+[31m|[m     pointer in advance to make a sweep work, which is what made a document
+[31m|[m     scrolled under a resting pointer build an editor for every block it
+[31m|[m     passed.
+[31m|[m     
+[31m|[m     A read-only row draws no hover tint. The tint marks the block the gutter
+[31m|[m     and the block menu act on, and a read-only surface has neither, so a
+[31m|[m     document scrolled under a resting pointer lit each block in turn. A plain
+[31m|[m     paragraph's row there no longer tracks the pointer at all, which also
+[31m|[m     took a wheel step over 2,415 blocks of prose drawn at full height from
+[31m|[m     4.6 ms to 1.8 ms.
+[31m|[m     
+[31m|[m     tests/test_documentview.cpp covers the scrolling surface, the tint and
+[31m|[m     the first drag in and out of a paragraph; tst_integration.qml's
+[31m|[m     test_zo6_firstDragOverAPlainParagraphSelects covers the first drag in the
+[31m|[m     note. Each fails without its change.
+[31m|[m     
+[31m|[m     Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+[31m|[m     Claude-Session: https://claude.ai/code/session_01Bg8LxRDrouQhMXsEVVY9es
+[31m|[m 
+[31m|[m  CHANGELOG.md                |  30 [32m++++[m
+[31m|[m  devel.md                    |   6 [32m+[m[31m-[m
+[31m|[m  qml/BackupRestoreDialog.qml |  36 [32m++[m[31m---[m
+[31m|[m  qml/BlockDelegateBase.qml   |   5 [32m+[m
+[31m|[m  qml/DiagramBlock.qml        |   3 [32m+[m[31m-[m
+[31m|[m  qml/DividerDelegate.qml     |   3 [32m+[m[31m-[m
+[31m|[m  qml/DocumentView.qml        |  51 [32m+++++[m[31m--[m
+[31m|[m  qml/EditableBlock.qml       |  23 [32m+++[m[31m-[m
+[31m|[m  qml/ImageBlock.qml          |   3 [32m+[m[31m-[m
+[31m|[m  qml/KanbanBlock.qml         |   3 [32m+[m[31m-[m
+[31m|[m  qml/MathBlock.qml           |   3 [32m+[m[31m-[m
+[31m|[m  qml/MediaBlock.qml          |   3 [32m+[m[31m-[m
+[31m|[m  qml/TableBlock.qml          |   3 [32m+[m[31m-[m
+[31m|[m  qml/TextBlockDelegate.qml   |  82 [32m++++++++++[m[31m-[m
+[31m|[m  selection.md                |  41 [32m++++[m[31m--[m
+[31m|[m  tests/test_documentview.cpp | 253 [32m++++++++++++++++++++++++++++++++++[m
+[31m|[m  tests/tst_integration.qml   |  43 [32m++++++[m
+[31m|[m  17 files changed, 531 insertions(+), 60 deletions(-)
+[31m|[m 
+* [33mcommit c1f5209b7f60d0508d7004800377e79c869bfa4f[m
+[31m|[m Author: kvit-s <info@kvit.app>
+[31m|[m Date:   Thu Sep 24 03:17:31 2026 -0500
+[31m|[m 
+[31m|[m     Fetch kvit-ui from its public repository
+[31m|[m     
+[31m|[m     The submodule's address was a directory on the machine the editor is
+[31m|[m     developed on, so a clone made anywhere else could not initialize
+[31m|[m     third_party/kvit-ui and could not build. It is now the public repository.
+[31m|[m     A checkout that already initialized the submodule keeps the address it
+[31m|[m     recorded then, in its own .git/config, and goes on fetching from there.
+[31m|[m     
+[31m|[m     Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+[31m|[m     Claude-Session: https://claude.ai/code/session_01CfwbrQ5tWZF8F2nLeQVDRp
+[31m|[m 
+[31m|[m  .gitmodules | 2 [32m+[m[31m-[m
+[31m|[m  1 file changed, 1 insertion(+), 1 deletion(-)
+[31m|[m 
+* [33mcommit 2105614568dcc8621e3fadf25688554f6edf81fc[m
+[31m|[m Author: kvit-s <info@kvit.app>
+[31m|[m Date:   Wed Sep 23 22:11:35 2026 -0500
+[31m|[m 
+[31m|[m     Let a host turn off the picture panel, and give the read-only view the vault's folders
+[31m|[m     
+[31m|[m     A message box has no use for the panel that edits a focused picture's path
+[31m|[m     and alt text: the path is a file the box named itself, and the Enter that
+[31m|[m     saves one of the panel's fields is ignored by the field and reaches a host
+[31m|[m     that sends on Enter, so saving the alt text would also send the message.
+[31m|[m     BlockEditorSurface.showImageEditPanel, forwarded by CompactEditor, turns the
+[31m|[m     panel off. With it off, a click on a picture opens the lightbox without
+[31m|[m     first moving the keyboard onto the picture. The click did that only so the
+[31m|[m     panel would be open when the lightbox closed, and it left the next
+[31m|[m     Backspace deleting the picture.
+[31m|[m     
+[31m|[m     DocumentView gave its editor only the note's own folder, so a picture named
+[31m|[m     from the vault's root (assets/a.png in a note inside a subfolder) or from a
+[31m|[m     website's root (/images/a.png) drew the broken placeholder while the note
+[31m|[m     itself showed it. It now takes assetRoot and siteRoot, both the open
+[31m|[m     vault's by default, with siteRoot being the vault's site folder inside
+[31m|[m     assetRoot, so a host drawing a file from a copy of the vault names the copy
+[31m|[m     once.
+[31m|[m     
+[31m|[m     tests/test_embeddededitor.cpp and tests/test_documentview.cpp cover both;
+[31m|[m     each new case fails without its change.
+[31m|[m     
+[31m|[m     Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+[31m|[m     Claude-Session: https://claude.ai/code/session_01V9RRd57FzWCDfmicTRw2UA
+[31m|[m 
+[31m|[m  CHANGELOG.md                  | 19 [32m+++++++[m
+[31m|[m  features.md                   |  3 [32m+[m[31m-[m
+[31m|[m  qml/BlockEditorSurface.qml    |  8 [32m+++[m
+[31m|[m  qml/CompactEditor.qml         |  5 [32m++[m
+[31m|[m  qml/DocumentView.qml          | 21 [32m++++++++[m
+[31m|[m  qml/ImageBlock.qml            | 17 [32m+++++[m[31m--[m
+[31m|[m  tests/test_documentview.cpp   | 73 [32m+++++++++++++++++++++++++++[m
+[31m|[m  tests/test_embeddededitor.cpp | 88 [32m++++++++++++++++++++++++++++++++[m[31m-[m
+[31m|[m  8 files changed, 227 insertions(+), 7 deletions(-)
+[31m|[m 
+* [33mcommit 79a903651d8e6217c2024f92f6ae4f7305554a2d[m
+[31m|[m Author: kvit-s <info@kvit.app>
+[31m|[m Date:   Wed Sep 23 20:44:32 2026 -0500
+[31m|[m 
+[31m|[m     Give a paragraph made by Enter the line spacing setting
+[31m|[m     
+[31m|[m     A block created empty never received the Typography line-height
+[31m|[m     multiplier. The editor applies it as a block format after replacing the
+[31m|[m     document's text, and a rebuild that found the text already right
+[31m|[m     returned before that step. An empty block always matches ("" against
+[31m|[m     ""), so its document kept the default format, and everything typed into
+[31m|[m     it inherited single spacing until the note was reopened. With the
+[31m|[m     spacing set to 1.35 at 13 px, the new paragraph's lines were 16 px apart
+[31m|[m     while the paragraph above it had 21.6 px.
+[31m|[m     
+[31m|[m     A rebuild with no text to replace now checks the first block's format
+[31m|[m     and applies the multiplier when it is missing. It checks rather than
+[31m|[m     re-applying because typing brings every keystroke through that path.
+[31m|[m     
+[31m|[m     Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+[31m|[m     Claude-Session: https://claude.ai/code/session_01QpKibEaFAiF27MWFo1XdvL
+[31m|[m 
+[31m|[m  src/qml/blockeditorengine.cpp | 15 [32m+++++++++++++[m[31m--[m
+[31m|[m  tests/test_typography.cpp     | 31 [32m+++++++++++++++++++++++++++++++[m
+[31m|[m  2 files changed, 44 insertions(+), 2 deletions(-)
+[31m|[m 
+* [33mcommit d63d88f7ecd27d617bbbccdf3ed1eb693192e9b1[m
+[31m|[m Author: kvit-s <info@kvit.app>
+[31m|[m Date:   Wed Sep 23 20:33:13 2026 -0500
+[31m|[m 
+[31m|[m     Skip span types that cannot start at a character before building a span
+[31m|[m     
+[31m|[m     The inline parser tried all eighteen span types at every character of a
+[31m|[m     paragraph, and each attempt constructed a FormattedSpan (five strings and a
+[31m|[m     list) and a marker string before learning that the character could not open
+[31m|[m     that type. Profiling the 500-note vault open put 85% of its CPU time there.
+[31m|[m     
+[31m|[m     Each type is now first checked against the character at the position, the
+[31m|[m     first character of its opening marker. Every matcher already refused any
+[31m|[m     other character before spending budget or writing anything, so no parse
+[31m|[m     result changes.
+[31m|[m     
+[31m|[m     Opening the 500-note collection goes from about 2540 ms to 480 ms of CPU,
+[31m|[m     and caret motion in a 100-formula paragraph from about 34 ms per key to
+[31m|[m     under its 16 ms limit; both timing tests failed before this.
+[31m|[m     
+[31m|[m     Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+[31m|[m     Claude-Session: https://claude.ai/code/session_01CgNJSMKCG4GtCh5K1TRYBB
+[31m|[m 
+[31m|[m  src/content/markdownformatter.cpp | 24 [32m++++++++++++++++++++++++[m
+[31m|[m  1 file changed, 24 insertions(+)
+[31m|[m 
+* [33mcommit 881fe8f371f3cb8cc23fed43b7d43a68126e2709[m
+[31m|[m Author: kvit-s <info@kvit.app>
+[31m|[m Date:   Wed Sep 23 18:50:06 2026 -0500
+[31m|[m 
+[31m|[m     Edit an image's path and alt text, and look up /paths per vault
+[31m|[m     
+[31m|[m     An image block had no way to change its path or alt text, and a broken
+[31m|[m     picture showed no controls at all. While the block has focus, a panel
+[31m|[m     under it now edits both, with Browse… going through the asset store as a
+[31m|[m     drop does.
+[31m|[m     
+[31m|[m     A path starting with "/" was only tried as an absolute path on this
+[31m|[m     machine, so a Hugo post's /images/a.png never found static/images/a.png.
+[31m|[m     Each vault now has .kvit/settings.json (VaultSettings) naming the folder
+[31m|[m     such paths point to, detected as `static` for a Hugo site, and the folder
+[31m|[m     new pictures are saved in; a picture saved inside the site folder is
+[31m|[m     written from "/". Settings has a "This vault" page for both, which the
+[31m|[m     edit panel links to only when the host sets offersImageSettings.
+[31m|[m     
+[31m|[m     Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+[31m|[m     Claude-Session: https://claude.ai/code/session_01CgNJSMKCG4GtCh5K1TRYBB
+[31m|[m 
+[31m|[m  CMakeLists.txt                       |   1 [32m+[m
+[31m|[m  features.md                          |  14 [32m++[m
+[31m|[m  qml/BlockEditorSurface.qml           |  18 [32m+++[m
+[31m|[m  qml/CompactEditor.qml                |   6 [32m+[m[31m-[m
+[31m|[m  qml/EditableBlock.qml                |   4 [32m+[m[31m-[m
+[31m|[m  qml/EditorDropArea.qml               |   8 [32m+[m[31m-[m
+[31m|[m  qml/ImageBlock.qml                   | 191 [32m++++++++++++++++++++[m[31m--[m
+[31m|[m  qml/MediaBlock.qml                   |   3 [32m+[m[31m-[m
+[31m|[m  qml/ReadOnlyPicture.qml              |   3 [32m+[m[31m-[m
+[31m|[m  qml/SettingsDialog.qml               | 198 [32m+++++++++++++++++++++++[m
+[31m|[m  qml/main.qml                         |   9 [32m++[m
+[31m|[m  src/application/documentexporter.cpp |   9 [32m+[m[31m-[m
+[31m|[m  src/content/imageassets.cpp          |  15 [32m+[m[31m-[m
+[31m|[m  src/content/imageassets.h            |  11 [32m+[m[31m-[m
+[31m|[m  src/qml/qmlsingletons.h              |  10 [32m++[m
+[31m|[m  src/repository/assetstore.cpp        |  56 [32m+++++[m[31m--[m
+[31m|[m  src/repository/assetstore.h          |  30 [32m+++[m[31m-[m
+[31m|[m  src/repository/notecollection.cpp    |   4 [32m+[m
+[31m|[m  src/repository/notecollection.h      |   5 [32m+[m
+[31m|[m  src/repository/vaultsettings.cpp     | 211 [32m+++++++++++++++++++++++++[m
+[31m|[m  src/repository/vaultsettings.h       | 110 [32m+++++++++++++[m
+[31m|[m  tests/CMakeLists.txt                 |   6 [32m+[m
+[31m|[m  tests/test_assetstore.cpp            |  38 [32m+++++[m
+[31m|[m  tests/test_imageassets.cpp           |  37 [32m+++++[m
+[31m|[m  tests/test_vaultsettings.cpp         | 156 [32m++++++++++++++++++[m
+[31m|[m  tests/tst_integration.qml            |  55 [32m+++++++[m
+[31m|[m  tools/uidriver.cpp                   |  24 [32m+++[m
+[31m|[m  27 files changed, 1189 insertions(+), 43 deletions(-)
+[31m|[m 
+* [33mcommit 4451e0073ea71eafc10c7cec755f307b92616a38[m
+[31m|[m Author: kvit-s <info@kvit.app>
+[31m|[m Date:   Wed Sep 23 17:02:36 2026 -0500
+[31m|[m 
+[31m|[m     Grow a list with Enter and send from any block with Ctrl+Enter
+[31m|[m     
+[31m|[m     In a CompactEditor that submits on Enter, a list item keeps Enter for
+[31m|[m     the list: it makes the next item, as in a document, since Shift+Enter
+[31m|[m     is the continuation line and there is no other way to grow it. Enter
+[31m|[m     on the empty item leaves the list, and Enter on the paragraph after
+[31m|[m     that sends.
+[31m|[m     
+[31m|[m     Ctrl+Enter is reported from every block, list and code included, so a
+[31m|[m     host that took Enter for itself always has one key that reaches it.
+[31m|[m     With Enter given back to the editor it stays the code block's way out.
+[31m|[m 
+[31m|[m  qml/BlockEditorSurface.qml    |  6 [32m++[m[31m-[m
+[31m|[m  qml/CompactEditor.qml         | 16 [32m++++[m[31m----[m
+[31m|[m  qml/EditableBlock.qml         | 23 [32m+++++++++++[m[31m-[m
+[31m|[m  tests/test_embeddededitor.cpp | 65 [32m+++++++++++++++++++++++++++++++++[m
+[31m|[m  4 files changed, 100 insertions(+), 10 deletions(-)
+[31m|[m 
+* [33mcommit 846ecb9993f592379e409e5b8277457346ce3ba8[m
+[31m|[m Author: kvit-s <info@kvit.app>
+[31m|[m Date:   Wed Sep 23 14:11:36 2026 -0500
+[31m|[m 
+[31m|[m     Pin kvit-ui at the popover keyboard fix
+[31m|[m     
+[31m|[m     kvit-ui 0a0b210 makes KvitPopover leave the keyboard where the reader put
+[31m|[m     it while the popover was fading out, rather than letting Qt move it back
+[31m|[m     at the end of the fade. The two commits before it change only kvit-ui's
+[31m|[m     own build.sh. Nothing here loads KvitPopover yet; the pin moves so that
+[31m|[m     kvit-works, which must pin the same kvit-ui commit as this editor, can
+[31m|[m     take the fix.
+[31m|[m     
+[31m|[m     Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>
+[31m|[m     Claude-Session: https://claude.ai/code/session_01GghzRTs85CCPfbDDqNfyPr
+[31m|[m 
+[31m|[m  third_party/kvit-ui | 2 [32m+[m[31m-[m
+[31m|[m  1 file changed, 1 insertion(+), 1 deletion(-)
+[31m|[m 
+* [33mcommit 09d366fd1f82e1a490872c3382d2ec4423b5fc29[m
+[31m|[m Author: kvit-s <info@kvit.app>
+[31m|[m Date:   Mon Sep 21 22:23:43 2026 -0500
+[31m|[m 
+[31m|[m     Leave the wheel alone where there is nothing to scroll
+[31m|[m     
+[31m|[m     An editor embedded as a box that grows with its content — the read-only
+[31m|[m     document surface, the message-box editor — is as tall as its document,
+[31m|[m     so its list has nothing to scroll and the wheel over it belongs to
+[31m|[m     whatever the host put it inside. The wheel handler already knew that and
+[31m|[m     declined those events by setting `accepted` false in its signal.
+[31m|[m     
+[31m|[m     Declining is not enough. A pointer handler that is enabled takes the
+[31m|[m     event out of the delivery that would otherwise have reached the host's
+[31m|[m     own scrolling view, and setting `accepted` false in the signal does not
+[31m|[m     put it back: measured in a host that puts the surface inside its own
+[31m|[m     ScrollView over a document twice the height of the pane, five notches of
+[31m|[m     the wheel moved the pane nothing at all, and the same five notches moved
+[31m|[m     it 72 px with the handler disabled.
+[31m|[m     
+[31m|[m     So the handler is disabled outright when the list it belongs to has
+[31m|[m     nothing to scroll, rather than enabled and declining. The signal keeps
+[31m|[m     its modifier check, which is a different question: Ctrl+wheel is the
+[31m|[m     reading size and belongs to whoever handles that.
+[31m|[m     
+[31m|[m     tests/test_documentview.cpp asserts the handler is disabled over a
+[31m|[m     surface that grew with its document. It is the handler's own state
+[31m|[m     rather than a wheel event's effect because the editor's suite has no
+[31m|[m     host around the surface to scroll.
+[31m|[m     
+[31m|[m     Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+[31m|[m     Claude-Session: https://claude.ai/code/session_01NkdCZYLXxCwj1wuX4dZwLW
+[31m|[m 
+[31m|[m  qml/WheelScroller.qml       | 14 [32m+++++++++++++[m[31m-[m
+[31m|[m  tests/test_documentview.cpp | 33 [32m+++++++++++++++++++++++++++++++++[m
+[31m|[m  2 files changed, 46 insertions(+), 1 deletion(-)
+[31m|[m 
+* [33mcommit 8db07afcbd3e80a2d45e990d9fdd2726319df87f[m
+[31m|[m Author: kvit-s <info@kvit.app>
+[31m|[m Date:   Mon Sep 21 21:06:49 2026 -0500
+[31m|[m 
+[31m|[m     Take a picture's height from its file too
+[31m|[m     
+[31m|[m     An image block already draws at the width its file says the picture is,
+[31m|[m     measured from the file's header rather than read back out of the decoded
+[31m|[m     image. Its height was still read back out of the decoded image, so a row
+[31m|[m     holding a picture stood 160 px tall — the placeholder tile height —
+[31m|[m     until the decode finished, and again every time the list recycled the
+[31m|[m     row, since a pooled row drops its pixmap and has nothing of its own left
+[31m|[m     to measure.
+[31m|[m     
+[31m|[m     The list places every row from the height the row above it reports, so
+[31m|[m     each picture that arrived moved the rest of the document under the
+[31m|[m     reader, and a scroll that recycled a picture's row did it twice more.
+[31m|[m     
+[31m|[m     The height now comes from the same measurement as the width, in both the
+[31m|[m     editor's ImageBlock and the read-only picture, which keeps the two
+[31m|[m     agreeing on shape as they already agree on width. A picture loaded over
+[31m|[m     the network cannot be measured and still answers from the decoded image;
+[31m|[m     the tile height stands until either can say.
+[31m|[m     
+[31m|[m     tests/test_documentview.cpp pools a row that is drawing a 360x240
+[31m|[m     picture and asks it for its geometry with the picture dropped. Before
+[31m|[m     this it answered 160 px tall.
+[31m|[m     
+[31m|[m     Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+[31m|[m     Claude-Session: https://claude.ai/code/session_01NkdCZYLXxCwj1wuX4dZwLW
+[31m|[m 
+[31m|[m  CHANGELOG.md                |  6 [32m++++++[m
+[31m|[m  qml/ImageBlock.qml          | 17 [32m++++++++++++++[m[31m---[m
+[31m|[m  qml/ReadOnlyPicture.qml     | 22 [32m+++++++++++++++++[m[31m-----[m
+[31m|[m  tests/test_documentview.cpp | 33 [32m+++++++++++++++++++++++++++++++++[m
+[31m|[m  4 files changed, 70 insertions(+), 8 deletions(-)
+[31m|[m 
+* [33mcommit 3243a3483dc5e57ce61d60637600ca2b1b9fddac[m
+[31m|[m Author: kvit-s <info@kvit.app>
+[31m|[m Date:   Mon Sep 21 18:11:57 2026 -0500
+[31m|[m 
+[31m|[m     Scroll the document by as much as the wheel was turned
+[31m|[m     
+[31m|[m     A QQuickFlickable handles the wheel itself, and measured through the
+[31m|[m     shipped shell — sending it wheel events and sampling where the view went
+[31m|[m     — what it does with them is two problems.
+[31m|[m     
+[31m|[m     It moves too little. One notch, 120 units of angleDelta, moved the view
+[31m|[m     25 px. The editor sets prose at 14 px on a line height of 1.3, so a line
+[31m|[m     is about 18 px and a notch is not quite a line and a half; three lines,
+[31m|[m     which is what the desktop's own wheelScrollLines setting asks for, would
+[31m|[m     be 55. A 616 px window took about two dozen notches to turn over one
+[31m|[m     screenful.
+[31m|[m     
+[31m|[m     And it smears a small delta over a third of a second. A wheel that
+[31m|[m     reports finer than one notch at a time — a Logitech MX Master, and
+[31m|[m     anything else whose wheel spins freely, over libinput's high-resolution
+[31m|[m     scroll axis — sends fractions of 120. Given 15 units the flickable moved
+[31m|[m     9 px, delivered as a decay running for 300 ms: 3.1, 1.9, 0.8, 1.1, 0.7,
+[31m|[m     0.3, 0.4, 0.2 and then a tail of movements below a tenth of a pixel. A
+[31m|[m     spin sends those faster than they decay, so what arrives is overlapping
+[31m|[m     decay curves rather than motion. A hundred of them over half a second —
+[31m|[m     twelve and a half notches of rotation — moved the view 94 px, under a
+[31m|[m     sixth of a screen.
+[31m|[m     
+[31m|[m     qml/WheelScroller.qml takes the wheel before the flickable sees it,
+[31m|[m     converts the rotation to a distance in text lines, and adds it to a
+[31m|[m     target that a frame-synchronised chase closes on. Every event
+[31m|[m     contributes its whole distance whether or not a frame was drawn between
+[31m|[m     it and the next, and a burst adds up instead of each event replacing the
+[31m|[m     last. Over the same events: a notch moves 54.6 px, one fine step 6.8 px
+[31m|[m     over 140 ms, and the spin that moved 94 px moves 682 — which is 12.5
+[31m|[m     times 54.6, the rotation that was asked for.
+[31m|[m     
+[31m|[m     Three things the wiring needs. Typewriter mode animates contentY, and an
+[31m|[m     animation between the write and the value means the scroller never reads
+[31m|[m     back what it wrote and concludes somebody else has the view, so the
+[31m|[m     Behavior stands down while the wheel is turning. The scrollbar handle is
+[31m|[m     drawn only while the flickable reports itself moving, which a scroll
+[31m|[m     driven from outside it does not, so the bar is told about this instead.
+[31m|[m     And an editor embedded as a box that grows with its content has nothing
+[31m|[m     to scroll, so it declines the wheel rather than eating its host's.
+[31m|[m     
+[31m|[m     What this is not. The cost of the QML work per scroll step was measured
+[31m|[m     across note sizes and does not grow with them: 0.09 ms median at 30
+[31m|[m     blocks, 0.40 at 500, 0.22 at 2000, and one or two new row measurements
+[31m|[m     per step even at 6000. The virtualization and the height table are not
+[31m|[m     what made scrolling jagged.
+[31m|[m     
+[31m|[m     Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+[31m|[m     Claude-Session: https://claude.ai/code/session_01KmJjd49uLkKNbSWxCSXJj3
+[31m|[m 
+[31m|[m  CMakeLists.txt            |   1 [32m+[m
+[31m|[m  qml/BlockEditor.qml       |  26 [32m++++[m
+[31m|[m  qml/DocumentScrollBar.qml |   9 [32m++[m
+[31m|[m  qml/WheelScroller.qml     | 228 [32m++++++++++++++++++++++++++++++++++++[m
+[31m|[m  4 files changed, 264 insertions(+)
+[31m|[m 
+* [33mcommit e6bd6f7e702505aa0c8f5cc1dcd338d357df5578[m
+[31m|[m Author: kvit-s <info@kvit.app>
+[31m|[m Date:   Mon Sep 21 17:35:40 2026 -0500
+[31m|[m 
+[31m|[m     Draw a picture at its own width from the file header
+[31m|[m     
+[31m|[m     An image block with no stored width took the width to draw at from the
+[31m|[m     loaded image while the decode request was taken from the width drawn,
+[31m|[m     which QML reports as a binding loop and breaks by refusing to
+[31m|[m     re-evaluate, at a width that depends on evaluation order. Each pass
+[31m|[m     around the circle re-decoded the file.
+[31m|[m     
+[31m|[m     ImageAssets.naturalSize() measures the file header with QImageReader
+[31m|[m     and remembers it per path until timestamp or length changes; drawn and
+[31m|[m     decoded widths both come from it, and the read-only picture uses it too
+[31m|[m     so SVGs agree between pane and editor.
+[31m|[m 
+[31m|[m  CHANGELOG.md                |  26 [32m++++++++[m
+[31m|[m  qml/ImageBlock.qml          |  37 [32m++++++++++[m[31m--[m
+[31m|[m  qml/ReadOnlyPicture.qml     |  33 [32m++++++++[m[31m---[m
+[31m|[m  src/content/imageassets.cpp |  30 [32m++++++++++[m
+[31m|[m  src/content/imageassets.h   |  40 [32m+++++++++++++[m
+[31m|[m  tests/test_documentview.cpp |  54 [32m+++++++++++++++++[m
+[31m|[m  tests/test_imageassets.cpp  | 108 [32m++++++++++++++++++++++++++++++++++[m
+[31m|[m  7 files changed, 314 insertions(+), 14 deletions(-)
+[31m|[m 
+* [33mcommit 637f36907bd5f8cb4a1cc39db276c99eaa16a58e[m
+[31m|[m Author: kvit-s <info@kvit.app>
+[31m|[m Date:   Mon Sep 21 09:01:33 2026 -0500
+[31m|[m 
+[31m|[m     Draw a read-only document with the editor
+[31m|[m     
+[31m|[m     A markdown document drawn somewhere other than the editor pane — a stored
+[31m|[m     version of the open note, a referring note's context, a transcript in an
+[31m|[m     application built on this one — went through a second renderer,
+[31m|[m     qml/ReadOnlyDocument.qml and the four files only it uses. A second
+[31m|[m     renderer draws a subset, and this one drew a small subset. It switched on
+[31m|[m     the block TYPE, and the kinds it missed are the ones that are not a type
+[31m|[m     at all: a task board, a table of contents, a Mermaid diagram and a
+[31m|[m     collection query are each stored as a Block::CodeBlock with a language, so
+[31m|[m     all four came out as the source inside their fence, a pipe table came out
+[31m|[m     as its pipe characters, and a kind a linked module registered could not be
+[31m|[m     drawn at all.
+[31m|[m     
+[31m|[m     qml/DocumentView.qml is that job done by the editor: one BlockEditor with
+[31m|[m     BlockEditorSurface.readOnly set, over a document the surface owns, sized
+[31m|[m     to its content so it can sit inside a scrolling area it does not own.
+[31m|[m     Every kind reaches the screen through BlockKindRegistry::delegateChoices()
+[31m|[m     exactly as it does in the note, including kinds that did not exist when
+[31m|[m     the component was written. The backup dialog's preview of a stored version
+[31m|[m     draws with it, and marks what differs from the note through the surface's
+[31m|[m     own DocumentDecorations spans rather than through a per-surface mark
+[31m|[m     registry of its own.
+[31m|[m     
+[31m|[m     Read-only is enforced delegate by delegate rather than declared. The text
+[31m|[m     areas refuse writes with `readOnly` rather than being switched off, which
+[31m|[m     is the one decision that differs from the renderer this replaces and
+[31m|[m     follows from where the selection coordinator sits: the old surface put its
+[31m|[m     sweep above the rows, so the rows had to be out of event delivery for a
+[31m|[m     press to reach it, while the editor puts the coordinator inside the rows,
+[31m|[m     so a read-only area keeps drag-selection, Ctrl+C and the cross-block range
+[31m|[m     working. BlockDelegateBase.readOnlyKeyPasses() is the list of keys that
+[31m|[m     still answer — the arrows, Home, End, the page keys, Escape, Ctrl+A and
+[31m|[m     Ctrl+C — and the rest are swallowed by the row, which matters beyond the
+[31m|[m     document: Ctrl+Z reaches AppActions and the window's undo stack, so an
+[31m|[m     ungated one would undo an edit to the open note from a row of another
+[31m|[m     document. Enter is gated twice, because Qt emits the key-specific Keys
+[31m|[m     signals before the general one and a gate in Keys.onPressed alone never
+[31m|[m     sees Return. Ctrl+A selects the whole document as text rather than as
+[31m|[m     blocks, since block selection is a mode whose keys are commands. The
+[31m|[m     gutter, the gap cursor, the drop area, the block menus, the to-do
+[31m|[m     checkbox, and the pickers on callouts, fences, pictures and diagrams are
+[31m|[m     gone rather than inert; the source editors behind a formula, a diagram and
+[31m|[m     a query stay reachable by keyboard and are not writable, so their source
+[31m|[m     can still be copied.
+[31m|[m     
+[31m|[m     Two things came out of the work rather than being part of it.
+[31m|[m     
+[31m|[m     focusSelectionHandler() was the same three lines in twelve delegates and
+[31m|[m     is now one function on BlockDelegateBase, which is where the read-only
+[31m|[m     guard for it belongs: AppActions is the window's, so a row of a drawn
+[31m|[m     document asking it to move the keyboard would take focus to the open
+[31m|[m     note's selection handler.
+[31m|[m     
+[31m|[m     And eight places that deferred work to the end of the turn with
+[31m|[m     Qt.callLater now use a Timer the item owns. A queued call cannot be
+[31m|[m     cancelled and holds the object or one of its functions, so an editor or a
+[31m|[m     row destroyed before the turn ends leaves a callback that runs against a
+[31m|[m     context that has gone — `attempted to evaluate a function in an invalid
+[31m|[m     context`, sixteen of them for a four-block note when a whole-document
+[31m|[m     selection is cleared and every promoted row demotes at once. A guard
+[31m|[m     inside the closure cannot help, because evaluating the closure at all is
+[31m|[m     the failure. It never showed while the only editor was the window's, which
+[31m|[m     lives as long as the window.
+[31m|[m     
+[31m|[m     tests/test_documentview.cpp is the new suite: it asserts the delegate that
+[31m|[m     drew each of nine block kinds, that a table is a grid and not its source,
+[31m|[m     that each of eleven keystrokes leaves the document byte for byte as it
+[31m|[m     was, that selecting and copying still work, and that the open note beside
+[31m|[m     it does not move. A uidriver capture of a note holding every block kind is
+[31m|[m     byte-for-byte the same before and after.
+[31m|[m     
+[31m|[m     Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+[31m|[m     Claude-Session: https://claude.ai/code/session_016pBysxyifFispyJse1jNxJ
+[31m|[m 
+[31m|[m  CHANGELOG.md                          |  29 [32m++[m
+[31m|[m  CMakeLists.txt                        |   1 [32m+[m
+[31m|[m  devel.md                              |  28 [32m++[m
+[31m|[m  docs/backlog.md                       |  18 [32m+[m
+[31m|[m  qml/BackupRestoreDialog.qml           |  42 [32m+[m[31m-[m
+[31m|[m  qml/BlockDelegateBase.qml             |  88 [32m+++[m[31m-[m
+[31m|[m  qml/BlockEditor.qml                   | 116 [32m++++[m[31m-[m
+[31m|[m  qml/BlockEditorSurface.qml            |  25 [32m+[m[31m-[m
+[31m|[m  qml/CalloutBlockChrome.qml            |  14 [32m+[m[31m-[m
+[31m|[m  qml/CodeBlockChrome.qml               |   5 [32m+[m[31m-[m
+[31m|[m  qml/CrossBlockTextSelection.qml       |  33 [32m+[m[31m-[m
+[31m|[m  qml/DiagramBlock.qml                  |  10 [32m+[m[31m-[m
+[31m|[m  qml/DividerDelegate.qml               |   4 [31m-[m
+[31m|[m  qml/DocumentView.qml                  | 223 [32m++++++++++[m
+[31m|[m  qml/EditableBlock.qml                 |  68 [32m++[m[31m-[m
+[31m|[m  qml/EmbedBlock.qml                    |   5 [32m+[m[31m-[m
+[31m|[m  qml/ImageBlock.qml                    |  22 [32m+[m[31m-[m
+[31m|[m  qml/KanbanBlock.qml                   |   3 [31m-[m
+[31m|[m  qml/MathBlock.qml                     |  12 [32m+[m[31m-[m
+[31m|[m  qml/MediaBlock.qml                    |   4 [31m-[m
+[31m|[m  qml/QueryBlock.qml                    |   5 [32m+[m[31m-[m
+[31m|[m  qml/TableBlock.qml                    |   4 [31m-[m
+[31m|[m  qml/TextBlockDelegate.qml             |  28 [32m+[m[31m-[m
+[31m|[m  qml/TocBlock.qml                      |  19 [32m+[m[31m-[m
+[31m|[m  qml/TodoDelegate.qml                  |   6 [32m+[m
+[31m|[m  selection.md                          | 369 [32m+++++[m[31m-----------[m
+[31m|[m  src/application/documentdecorations.h |  25 [32m+[m[31m-[m
+[31m|[m  tests/CMakeLists.txt                  |  14 [32m+[m
+[31m|[m  tests/test_documentview.cpp           | 549 [32m++++++++++++++++++++++++[m
+[31m|[m  tests/test_readonlydocument.cpp       |  79 [32m++[m[31m--[m
+[31m|[m  30 files changed, 1439 insertions(+), 409 deletions(-)
+[31m|[m 
+* [33mcommit 7a2ba712653ec56bd7382378ce630ebae37fbf1e[m
+[31m|[m Author: kvit-s <info@kvit.app>
+[31m|[m Date:   Mon Sep 21 07:09:25 2026 -0500
+[31m|[m 
+[31m|[m     Let the editor be embedded as a message box
+[31m|[m     
+[31m|[m     The block editor takes eight objects that hold one document's state, and
+[31m|[m     every one of them defaults to the window's own. An editor embedded
+[31m|[m     anywhere but the document pane therefore shared six of the eight with the
+[31m|[m     open note, and the failure was silent: typing into it grew the note's undo
+[31m|[m     history, put its headings in the note's outline, counted its words in the
+[31m|[m     note's statistics, matched its text in the note's find bar, recorded its
+[31m|[m     rows in the note's height table, and took the decoration seam's document
+[31m|[m     view away from the note's editor. Two of the eight could already be built
+[31m|[m     from QML; the other six could not, and the four projections had no way to
+[31m|[m     be told which document they were over.
+[31m|[m     
+[31m|[m     All eight are now creatable types, and the wiring is assignable:
+[31m|[m     DocumentUndoStack, DocumentBlockSearch, DocumentBlockOutline,
+[31m|[m     DocumentBlockHeights, DocumentBlockStats and DocumentBlockDecorations join
+[31m|[m     DocumentBlocks and DocumentBlockSelection, the four projections take
+[31m|[m     `model` as a property, and BlockModel takes `undoStack` the same way. Its
+[31m|[m     m_undoStack becomes a QPointer, since a stack built in QML beside the model
+[31m|[m     can be destroyed before it.
+[31m|[m     
+[31m|[m     qml/CompactEditor.qml is what that buys: the editor in a box a few lines
+[31m|[m     tall, for a message to an agent, a comment, or a note jotted without
+[31m|[m     opening the main window. It owns all eight objects, hosts one BlockEditor
+[31m|[m     with the gutter, find bar, formatting bar and scrollbar switched off, sizes
+[31m|[m     itself from the list's content height up to `maximumLines` and scrolls past
+[31m|[m     that, and moves markdown in and out through DocumentSerializer — so a host
+[31m|[m     stores and sends markdown while the writer sees the rendered document.
+[31m|[m     
+[31m|[m     Enter sends there rather than making the next block, and the hand-off is a
+[31m|[m     signal rather than an unaccepted keystroke. Leaving the key unaccepted does
+[31m|[m     not work: the row's TextArea handles Return itself, so a keystroke the row
+[31m|[m     declines is taken by the text area underneath and written into the block as
+[31m|[m     a newline, and nothing outside the row ever sees it. A row whose editor has
+[31m|[m     `returnCreatesBlock` false accepts the key and emits
+[31m|[m     BlockEditorSurface.returnPressed(blockIndex). Everything else Enter does is
+[31m|[m     unchanged.
+[31m|[m     
+[31m|[m     Turning the gutter off needed the strip's reserved width to stop being a
+[31m|[m     literal. Eleven delegates wrote 44 and five wrote 52; a row with no strip
+[31m|[m     would have indented its text and drawn its hover tint past an empty column.
+[31m|[m     Both are now BlockDelegateBase.gutterInset, which is 44 or 0. With the
+[31m|[m     gutter on the arithmetic is identical, and a uidriver capture of a note
+[31m|[m     holding every block kind is byte-for-byte the same before and after.
+[31m|[m     
+[31m|[m     tests/test_embeddededitor.cpp defends the separation object by object: it
+[31m|[m     creates a compact editor inside the shipped shell beside the note's own,
+[31m|[m     types into it, and checks that none of the eight is the window's, that the
+[31m|[m     note's six projections do not move, that an undo in the box is an undo of
+[31m|[m     the box alone, and that two boxes in one window keep separate documents.
+[31m|[m     
+[31m|[m     Written against planning/embeddable-editor.md, whose four open questions
+[31m|[m     are answered at the end of that file.
+[31m|[m     
+[31m|[m     Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+[31m|[m     Claude-Session: https://claude.ai/code/session_016pBysxyifFispyJse1jNxJ
+[31m|[m 
+[31m|[m  CHANGELOG.md                   |  34 [32m++[m
+[31m|[m  CMakeLists.txt                 |   1 [32m+[m
+[31m|[m  devel.md                       |  43 [32m++[m
+[31m|[m  docs/backlog.md                |  19 [32m+[m
+[31m|[m  qml/BlockDelegateBase.qml      |  17 [32m+[m
+[31m|[m  qml/BlockEditor.qml            |  51 [32m++[m[31m-[m
+[31m|[m  qml/BlockEditorSurface.qml     |  45 [32m++[m
+[31m|[m  qml/BlockGutter.qml            |  29 [32m+[m[31m-[m
+[31m|[m  qml/CompactEditor.qml          | 246 [32m+++++++++++[m
+[31m|[m  qml/DiagramBlock.qml           |   4 [32m+[m[31m-[m
+[31m|[m  qml/DividerDelegate.qml        |   4 [32m+[m[31m-[m
+[31m|[m  qml/EditableBlock.qml          |  19 [32m+[m[31m-[m
+[31m|[m  qml/EmbedBlock.qml             |   2 [32m+[m[31m-[m
+[31m|[m  qml/FindBar.qml                |  10 [32m+[m
+[31m|[m  qml/FormattingBar.qml          |   7 [32m+[m[31m-[m
+[31m|[m  qml/ImageBlock.qml             |   8 [32m+[m[31m-[m
+[31m|[m  qml/KanbanBlock.qml            |   4 [32m+[m[31m-[m
+[31m|[m  qml/MathBlock.qml              |   4 [32m+[m[31m-[m
+[31m|[m  qml/MediaBlock.qml             |   4 [32m+[m[31m-[m
+[31m|[m  qml/QueryBlock.qml             |   2 [32m+[m[31m-[m
+[31m|[m  qml/TableBlock.qml             |   4 [32m+[m[31m-[m
+[31m|[m  qml/TextBlockDelegate.qml      |  15 [32m+[m[31m-[m
+[31m|[m  qml/TocBlock.qml               |   2 [32m+[m[31m-[m
+[31m|[m  src/domain/blockmodel.cpp      |   8 [32m+[m
+[31m|[m  src/domain/blockmodel.h        |  25 [32m+[m[31m-[m
+[31m|[m  src/domain/documentheights.cpp |   1 [32m+[m
+[31m|[m  src/domain/documentheights.h   |   7 [32m+[m
+[31m|[m  src/domain/documentoutline.cpp |   1 [32m+[m
+[31m|[m  src/domain/documentoutline.h   |   7 [32m+[m
+[31m|[m  src/domain/documentsearch.cpp  |   1 [32m+[m
+[31m|[m  src/domain/documentsearch.h    |   7 [32m+[m
+[31m|[m  src/domain/documentstats.cpp   |   3 [32m+[m
+[31m|[m  src/domain/documentstats.h     |   9 [32m+[m
+[31m|[m  src/qml/qmlsingletons.h        |  84 [32m+++[m[31m-[m
+[31m|[m  tests/CMakeLists.txt           |  15 [32m+[m
+[31m|[m  tests/test_embeddededitor.cpp  | 685 [32m+++++++++++++++++++++++++++++++[m
+[31m|[m  36 files changed, 1375 insertions(+), 52 deletions(-)
+[31m|[m 
+* [33mcommit c57fd321ad1f0151f214c3a8548d4cf1e6306e31[m
+[31m|[m Author: kvit-s <skolos@yahoo.com>
+[31m|[m Date:   Fri Sep 18 18:11:43 2026 -0500
+[31m|[m 
+[31m|[m     Take the shared build settings
+[31m|[m     
+[31m|[m     build.sh now sources ~/kvit-build/kvit-build-env.sh when it is there and passes
+[31m|[m     what it reports to the configure step. The four other Kvit repositories on this
+[31m|[m     machine already do, and this one matters most of the five, because two of them
+[31m|[m     compile it as a subdirectory: its 132 translation units are compiled three
+[31m|[m     times here.
+[31m|[m     
+[31m|[m     What it brings: ccache in front of the compiler, mold as the linker, -gz=zlib
+[31m|[m     on every compile and link, QT_SKIP_DEFAULT_TESTCASE_DIRS,
+[31m|[m     CMAKE_EXPORT_COMPILE_COMMANDS, and link-time optimization held explicitly off.
+[31m|[m     
+[31m|[m     QT_SKIP_DEFAULT_TESTCASE_DIRS is the one worth understanding rather than just
+[31m|[m     taking. Qt attaches QT_TESTCASE_SOURCEDIR and QT_TESTCASE_BUILDDIR to every
+[31m|[m     target linking Qt6::Test, as an interface compile definition in
+[31m|[m     Qt6TestTargets.cmake, and both hold absolute paths -- 201 compile edges each
+[31m|[m     here, which no compiler cache can serve in a second checkout. Qt guards them
+[31m|[m     with a target property that CMake 3.23 and later initialize from a plain
+[31m|[m     variable of the same name, which is what the shared file sets. What they exist
+[31m|[m     for is QFINDTESTDATA, which falls back to the recorded source and build
+[31m|[m     directories when it cannot find a file beside the executable, and no test in
+[31m|[m     any of the five repositories calls it.
+[31m|[m     
+[31m|[m     Nothing depends on the file being there. Absent it, this configures without it
+[31m|[m     and builds exactly as before, which is what keeps the repository buildable for
+[31m|[m     continuous integration, for Flathub and on Windows.
+[31m|[m     
+[31m|[m     Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+[31m|[m     Claude-Session: https://claude.ai/code/session_01EjxbTveoNxvbkFbwhtQikk
+[31m|[m 
+[31m|[m  build.sh | 24 [32m+++++++++++++++++++++++[m[31m-[m
+[31m|[m  1 file changed, 23 insertions(+), 1 deletion(-)
+[31m|[m 
+* [33mcommit affd9eeb742f1c32df8c76da22da0c2ae056170d[m
+[31m|[m Author: kvit-s <skolos@yahoo.com>
+[31m|[m Date:   Fri Sep 18 18:11:40 2026 -0500
+[31m|[m 
+[31m|[m     Write out the math engine's source list instead of globbing it
+[31m|[m     
+[31m|[m     The list was a GLOB_RECURSE with three exclusions, and its comment gave the
+[31m|[m     reason: it "reproduces [the upstream source list] without a 130-line
+[31m|[m     transcription that would drift from upstream". That reason held while upstream
+[31m|[m     was still being followed. This is a vendored copy of MicroTeX at a pinned
+[31m|[m     commit that nobody is updating, so the drift it guarded against can no longer
+[31m|[m     happen.
+[31m|[m     
+[31m|[m     Be accurate about what the glob cost, because it is not much. CONFIGURE_DEPENDS
+[31m|[m     made the build tool re-check the directories on every build, which measures
+[31m|[m     0.01 seconds. What it bought was that a file appearing or disappearing under
+[31m|[m     src/ triggered a re-configure, costing about 15 seconds, and in a copy nobody
+[31m|[m     is changing that never occurs. So this is tidying rather than a speed-up, and
+[31m|[m     the honest reason for it is the one above.
+[31m|[m     
+[31m|[m     Checked rather than assumed: the set of object files microtex compiles is
+[31m|[m     identical before and after, 104 of them.
+[31m|[m     
+[31m|[m     Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+[31m|[m     Claude-Session: https://claude.ai/code/session_01EjxbTveoNxvbkFbwhtQikk
+[31m|[m 
+[31m|[m  third_party/microtex/CMakeLists.txt | 133 [32m+++++++++++++++++++++++[m[31m---[m
+[31m|[m  1 file changed, 121 insertions(+), 12 deletions(-)
+[31m|[m 
+* [33mcommit 446babc2538caae411a74c7f01bf03970efc445b[m
+[31m|[m Author: kvit-s <skolos@yahoo.com>
+[31m|[m Date:   Fri Sep 18 18:11:25 2026 -0500
+[31m|[m 
+[31m|[m     Take the absolute paths off the compile commands
+[31m|[m     
+[31m|[m     A compiler cache such as ccache decides whether it has compiled a file before
+[31m|[m     by hashing the compiler, the whole argument list and the contents of every file
+[31m|[m     the compile reads. It rewrites the arguments it recognises as paths -- -I,
+[31m|[m     -isystem, -include, the input file -- to paths relative to the working
+[31m|[m     directory before hashing, so that two checkouts of the same commit at different
+[31m|[m     paths produce one cache entry rather than two. It cannot rewrite a path inside
+[31m|[m     a macro value, because nothing tells it that one is a path. One such macro
+[31m|[m     therefore defeats the cache for every translation unit that sees it.
+[31m|[m     
+[31m|[m     571 of this repository's 651 compile edges had one, and the number matters more
+[31m|[m     than it looks, because two other projects build this repository as a
+[31m|[m     subdirectory: the same definitions reached 586 of 713 compile edges in one and
+[31m|[m     387 of 540 in the other.
+[31m|[m     
+[31m|[m     KVIT_MATH_RES_ROOT was 554 of them. It was a PUBLIC compile definition on the
+[31m|[m     microtex target, so it reached everything that links the vendored math engine,
+[31m|[m     and only MathRenderer::resourceRoot() ever read it. It is now set on that one
+[31m|[m     source file. Nothing about how the path resolves changed -- the same value
+[31m|[m     reaches the same function, the KVIT_MATH_RES environment variable still
+[31m|[m     overrides it, and `kvit-notes --math-selftest` reports the same resource root as
+[31m|[m     before -- but one compile command holds an absolute path rather than five
+[31m|[m     hundred.
+[31m|[m     
+[31m|[m     KVIT_SOURCE_ROOT and KVIT_TEST_FIXTURES were 16 between them. They now reach
+[31m|[m     every test in tests/ through CTest's ENVIRONMENT property, applied in the loop
+[31m|[m     at the end of tests/CMakeLists.txt that already labels each test, so a test
+[31m|[m     added later gets them without anyone remembering to ask. KvitTestPaths in
+[31m|[m     tests/testpaths.h reads them, and each falls back to a path relative to the
+[31m|[m     test binary's own directory, so a test run by hand needs no environment.
+[31m|[m     
+[31m|[m     What is left is the one edge on mathrenderer.cpp.
+[31m|[m     
+[31m|[m     Suite: 107 of 110 pass. The three that do not are processor-time budgets and
+[31m|[m     are unrelated: NoteCollectionTests measures 2624 ms against a 2000 ms ceiling
+[31m|[m     where the unchanged tree measures 2631 ms, the formula-caret case in
+[31m|[m     IntegrationTestsIsolated measures 36.5 ms against a 16 ms ceiling where the
+[31m|[m     unchanged tree measures 36.1 ms, and a third varies between CollectionSearchTests
+[31m|[m     and PerformanceOpsTests and passes when run on its own.
+[31m|[m     
+[31m|[m     Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+[31m|[m     Claude-Session: https://claude.ai/code/session_01EjxbTveoNxvbkFbwhtQikk
+[31m|[m 
+[31m|[m  CMakeLists.txt                      | 22 [32m+++++++++++[m
+[31m|[m  tests/CMakeLists.txt                | 39 [32m++++++++++++[m[31m-------[m
+[31m|[m  tests/test_diagramclassifier.cpp    |  5 [32m++[m[31m-[m
+[31m|[m  tests/test_diagramrepair.cpp        |  5 [32m++[m[31m-[m
+[31m|[m  tests/test_mathrenderer.cpp         | 13 [32m++[m[31m-----[m
+[31m|[m  tests/testpaths.h                   | 55 [32m+++++++++++++++++++++++++++[m
+[31m|[m  tests/testsetup.h                   |  6 [32m+[m[31m--[m
+[31m|[m  third_party/microtex/CMakeLists.txt | 28 [32m+++++++++++[m[31m---[m
+[31m|[m  8 files changed, 140 insertions(+), 33 deletions(-)
+[31m|[m 
+* [33mcommit 1298d4527316006b53c9b18ff65dc5036fe53cf5[m
+[31m|[m Author: kvit-s <info@kvit.app>
+[31m|[m Date:   Sun Sep 13 18:27:17 2026 -0500
+[31m|[m 
+[31m|[m     Say when an asynchronous open was overtaken, instead of nothing
+[31m|[m     
+[31m|[m     C21. DocumentManager bumps a generation counter on every open, synchronous ones
+[31m|[m     included, and onAsyncOpenFinished() returned bare when the result it was handed
+[31m|[m     no longer matched: no openAsyncFinished, no openFailed, nothing at all. A caller
+[31m|[m     waiting on the outcome of its own open then waited for the rest of the session,
+[31m|[m     because nothing behind any of this times out.
+[31m|[m     
+[31m|[m     StartupController is such a caller. It opens the remembered note
+[31m|[m     asynchronously, sets m_initialOpenInProgress, and finishes startup from that
+[31m|[m     handler; when its open was overtaken the handler never ran, the flag stayed
+[31m|[m     set, finished never became true, and everything gated on the end of startup
+[31m|[m     waited for the life of the window. It is reachable from any window that opens a
+[31m|[m     document during its first second, and kvit-notes-pro met it when a second
+[31m|[m     window restored the file surface it had closed on while the startup open was
+[31m|[m     still in flight. It works around the one path it knows about by deferring such
+[31m|[m     a restore until finished; the silence covered every other caller.
+[31m|[m     
+[31m|[m     An overtaken open now emits openAsyncSuperseded(filePath). That is a signal of
+[31m|[m     its own rather than an `ok` of false because the two mean different things to
+[31m|[m     whoever asked: a failure is worth telling somebody about and worth not trying
+[31m|[m     again, while being overtaken is ordinary -- the file is fine, and the open that
+[31m|[m     replaced yours is the one the person asked for. It also breaks no caller, since
+[31m|[m     every existing one connects to openAsyncFinished and there are three of them,
+[31m|[m     one here and two test spies downstream. The in-progress flag is deliberately
+[31m|[m     left alone in that branch: the open that overtook this one may still be
+[31m|[m     running, and it owns the flag now.
+[31m|[m     
+[31m|[m     StartupController finishes outright when its open is overtaken, rather than
+[31m|[m     going through tryFinishStartup(). That function picks a candidate and opens it,
+[31m|[m     and there is nothing left to choose: an open is what startup was trying to
+[31m|[m     reach and one has just happened. Routing supersession through it reopened the
+[31m|[m     remembered note over the document somebody had just clicked, which is what the
+[31m|[m     first version of this did and what its test caught. The note is not added to
+[31m|[m     the failed set either -- nothing is wrong with it, and a later startup should
+[31m|[m     be free to open it.
+[31m|[m     
+[31m|[m     Both new cases fail on the code as it stood, each hanging for fifteen seconds
+[31m|[m     on a signal that never arrives before the assertion gives up, which is the
+[31m|[m     defect in miniature.
+[31m|[m     
+[31m|[m     ctest: three red, all standing performance budgets and none of them this
+[31m|[m     change. note.journal_write at 2.15 ms against 2.00, collection.open 500-note at
+[31m|[m     2514 ms against 2000, and formulaHeavyCaretMotionStaysLinear at 36 ms per key
+[31m|[m     against 16. A whole-suite run also failed test_v2_pinAndFavoriteToggles once;
+[31m|[m     it passes three times alone, passes in a complete 389-case run of its own
+[31m|[m     registration, and passed on re-run, so it is an order-dependent flake in a
+[31m|[m     hover-and-click case rather than anything here.
+[31m|[m     
+[31m|[m     Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+[31m|[m     Claude-Session: https://claude.ai/code/session_01XZzf8ch1eYrAAyQ1CH2jZS
+[31m|[m 
+[31m|[m  src/application/documentmanager.cpp   | 11 [32m+++[m[31m-[m
+[31m|[m  src/application/documentmanager.h     | 22 [32m++++++++[m
+[31m|[m  src/application/startupcontroller.cpp | 41 [32m++++++++++++++[m
+[31m|[m  src/application/startupcontroller.h   |  5 [32m++[m
+[31m|[m  tests/test_documentmanager.cpp        | 53 [32m++++++++++++++++++[m
+[31m|[m  tests/test_startupcontroller.cpp      | 71 [32m+++++++++++++++++++++++++[m
+[31m|[m  6 files changed, 202 insertions(+), 1 deletion(-)
+[31m|[m 
+* [33mcommit 95b1e4c22ce63f1164a0f62efe793723549ebca9[m
+[31m|[m Author: kvit-s <info@kvit.app>
+[31m|[m Date:   Sun Sep 13 17:41:30 2026 -0500
+[31m|[m 
+[31m|[m     Take the interface layer's named radio options
+[31m|[m     
+[31m|[m     third_party/kvit-ui 24b0d1f -> 1aba716, which lets an option of a
+[31m|[m     KvitRadioGroup carry an objectName so that an application can find one option
+[31m|[m     of a group it did not build. Nothing else in the layer changed.
+[31m|[m     
+[31m|[m     Requested by kvit-notes-pro, which pins this repository and pins kvit-ui
+[31m|[m     directly, and whose pre-commit hook refuses a commit leaving the two pointers
+[31m|[m     naming different kvit-ui commits. Its agent settings page draws six radio
+[31m|[m     options each beside a "?" button repeating the description the option already
+[31m|[m     publishes, and could not move to the shared group while its own tests found
+[31m|[m     those options by name.
+[31m|[m     
+[31m|[m     This editor loads KvitRadioGroup nowhere -- no reference in qml/ or src/ -- so
+[31m|[m     nothing it draws changes.
+[31m|[m     
+[31m|[m     ./build.sh --test: four red, all performance budgets and none of them this
+[31m|[m     change. collection.open 500-note at 2550 ms against a 2000 ms ceiling and
+[31m|[m     formulaHeavyCaretMotionStaysLinear at 35.48 and 38.13 ms per key against 16 ms
+[31m|[m     are both already recorded as standing, the second measured against a clean
+[31m|[m     checkout of main and reproducing on an idle machine. note.journal_write at
+[31m|[m     2.64 ms against a 2.00 ms budget is the third: it fails alone at 2.11 ms on a
+[31m|[m     machine at 0.09 load per core, so it is a standing regression rather than
+[31m|[m     contention, and it is not recorded anywhere yet. Nobody has looked at any of
+[31m|[m     the three.
+[31m|[m     
+[31m|[m     Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+[31m|[m     Claude-Session: https://claude.ai/code/session_01XZzf8ch1eYrAAyQ1CH2jZS
+[31m|[m 
+[31m|[m  third_party/kvit-ui | 2 [32m+[m[31m-[m
+[31m|[m  1 file changed, 1 insertion(+), 1 deletion(-)
+[31m|[m 
+* [33mcommit 238e103f1f0ba21a3457e2890b9bd242fe43a5d2[m
+[31m|[m Author: kvit-s <info@kvit.app>
+[31m|[m Date:   Sun Sep 13 14:25:27 2026 -0500
+[31m|[m 
+[31m|[m     search: stop a vault switch from deadlocking the two index threads
+[31m|[m     
+[31m|[m     Switching vaults hung the whole application, about one switch in four on a
+[31m|[m     loaded machine and never on an idle one, and the stack was the same every
+[31m|[m     time. The main thread sat in CollectionSearchIndex::openForRoot() on the
+[31m|[m     semaphore of a blocking-queued call into the write worker; the write worker
+[31m|[m     sat in SearchIndexDb::close(), blocked on a SQLite mutex at
+[31m|[m     QSqlDatabase::removeDatabase(); the read worker sat on a different mutex
+[31m|[m     inside the same driver. Nothing timed out, so the window was gone for the rest
+[31m|[m     of the session.
+[31m|[m     
+[31m|[m     The two workers hold separate connections to one database file, and detaching
+[31m|[m     one of them is not a private act: removeDatabase() takes Qt's process-wide
+[31m|[m     connection registry lock and destroys the driver underneath it, and destroying
+[31m|[m     the driver enters SQLite, which holds locks that the other connection's
+[31m|[m     running statement also holds. Reached from two threads at once the two get
+[31m|[m     taken in opposite orders. It needs the reader's last statement to still be
+[31m|[m     running when the close begins, which is why it is load-dependent and why the
+[31m|[m     consequence is a permanent hang rather than a slow switch.
+[31m|[m     
+[31m|[m     Three things change, and all three are needed.
+[31m|[m     
+[31m|[m     A file's connections now say what they are doing, and SearchConnectionGate --
+[31m|[m     one object per database file, shared by every connection to it -- keeps the
+[31m|[m     two kinds apart. Running a statement is shared use, so the read and write
+[31m|[m     connections still overlap, which is what two connections and WAL are for.
+[31m|[m     Opening or closing is exclusive: it waits for every statement in flight on
+[31m|[m     that file and holds new ones off until it is done. A close therefore waits for
+[31m|[m     the readers of that index instead of competing with them inside the driver.
+[31m|[m     Connections are also asked for with QSqlDatabase::database(name, false) now:
+[31m|[m     the default form reopens a closed connection while holding the registry's read
+[31m|[m     lock, which is the other half of the same inversion, and every connection here
+[31m|[m     is opened explicitly anyway.
+[31m|[m     
+[31m|[m     openForRoot() no longer blocks. It posts the open to the two workers and
+[31m|[m     reports on openFinished() and usableChanged(), so a search thread that stops
+[31m|[m     answering costs the search rather than the session. The calls that still wait
+[31m|[m     -- the rebuild that recovers a degraded index, the blocking close, revisionOf
+[31m|[m     and teardown -- are bounded by workerReplyTimeoutMs() and report failure. A
+[31m|[m     teardown that times out leaves the thread running rather than destroying a
+[31m|[m     QThread that is still going, which would abort the process.
+[31m|[m     
+[31m|[m     Order comes from the worker queues rather than from waiting. The close of the
+[31m|[m     vault being left, the open of the next one and every write in between are
+[31m|[m     posted to the same two threads and delivered in the order they were posted, so
+[31m|[m     a switch arriving while the previous vault is still closing waits behind that
+[31m|[m     close on the search side. The write connection's open is posted first, which
+[31m|[m     is what lets a reconcile issued in the same breath land on the new vault's
+[31m|[m     database instead of being dropped for arriving early; the read connection lets
+[31m|[m     go at once and reattaches only when the writer reports the file is good, since
+[31m|[m     the writer owns rebuilding.
+[31m|[m     
+[31m|[m     The feed no longer decides whether a root is served by reading isUsable() off
+[31m|[m     a call that has not finished. It records the root it asked for and asks the
+[31m|[m     index which root it is serving, so a failed open is still visible to the next
+[31m|[m     sync.
+[31m|[m     
+[31m|[m     Tests. testClosingWaitsForTheReadersOfThatFile parks a query inside its scan
+[31m|[m     through the cancellation token and asserts the close does not return until the
+[31m|[m     query finishes; it fails within a second without the gate.
+[31m|[m     testSwitchingRootsUnderQueryLoadCompletesEveryTime runs a hundred switches
+[31m|[m     with the read thread busy, each completing inside a bounded time, and asserts
+[31m|[m     structurally that the switch cannot have opened anything before returning --
+[31m|[m     which a blocking open fails whatever the clock says.
+[31m|[m     testWorkQueuedDuringAnOpenReachesTheNewVault covers the ordering that the
+[31m|[m     asynchronous open depends on. testAWedgedSearchThreadLeavesTheWindowUsable
+[31m|[m     parks both search threads for good and shows the vault still switching, the
+[31m|[m     notes still listed, the search degrading and the session still closing.
+[31m|[m     
+[31m|[m     Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+[31m|[m     Claude-Session: https://claude.ai/code/session_011zrE1PkdMPzdv1JiUtTmGM
+[31m|[m 
+[31m|[m  CHANGELOG.md                         |  23 [32m++[m
+[31m|[m  devel.md                             |  72 [32m+++++[m
+[31m|[m  src/application/collectionsearch.cpp |   7 [32m+[m
+[31m|[m  src/repository/notecollection.cpp    |  18 [32m+[m[31m-[m
+[31m|[m  src/search/collectionsearchindex.cpp | 418 [32m+++++++++++++++++++[m[31m------[m
+[31m|[m  src/search/collectionsearchindex.h   |  91 [32m+++++[m[31m-[m
+[31m|[m  src/search/searchindexdb.cpp         | 288 [32m+++++++++++++++[m[31m--[m
+[31m|[m  src/search/searchindexdb.h           |  20 [32m++[m
+[31m|[m  src/search/searchindexfeed.cpp       |  36 [32m++[m[31m-[m
+[31m|[m  src/search/searchindexfeed.h         |   7 [32m+[m[31m-[m
+[31m|[m  tests/test_collectionsearch.cpp      | 322 [32m++++++++++++++++++[m[31m-[m
+[31m|[m  tests/test_searchindexdb.cpp         | 132 [32m++++++++[m
+[31m|[m  12 files changed, 1268 insertions(+), 166 deletions(-)
+[31m|[m 
+* [33mcommit 418a0305f3e20502b126db34bb36d0d01c581061[m
+[31m|[m Author: kvit-s <info@kvit.app>
+[31m|[m Date:   Sun Sep 13 12:55:53 2026 -0500
+[31m|[m 
+[31m|[m     Drop the note list's rows when the vault they name closes
+[31m|[m     
+[31m|[m     NoteListModel coalesced every collection change through a 20 ms timer,
+[31m|[m     including the one a root change causes. For that interval the model kept
+[31m|[m     advertising rows naming notes in the vault just closed, and the collection
+[31m|[m     could answer nothing about any of them: data() looked each row's relative
+[31m|[m     path up, found no entry, and returned a default QVariant for every role.
+[31m|[m     Anything that painted in that window drew rows with a blank title, a blank
+[31m|[m     snippet, no date and a word count of zero.
+[31m|[m     
+[31m|[m     Nothing reported it. Qt.formatDateTime used to refuse the empty string a
+[31m|[m     `string` property produced, and 708ebac correctly declared the delegate's
+[31m|[m     created and modified as `date`, after which an invalid QDateTime formats to
+[31m|[m     nothing in silence. So the rows go with the vault, and the claim is now held
+[31m|[m     by assertions rather than by a console message:
+[31m|[m     
+[31m|[m     - rootChanged rebuilds at once rather than scheduling. There is nothing to
+[31m|[m       coalesce there, because opening or closing a vault is one deliberate act
+[31m|[m       rather than the stream of filesystem events the timer exists for.
+[31m|[m       revisionChanged keeps the timer.
+[31m|[m     
+[31m|[m     - data() stays tolerant of a row whose entry has gone, since deleting a note
+[31m|[m       drops it from the collection while the rows stand until the next rebuild,
+[31m|[m       but every role now answers in the type the delegate declares for it and the
+[31m|[m       path role returns the row's own path. A role that returns a default
+[31m|[m       QVariant reaches QML as `undefined`, which a required `date`, `int` or
+[31m|[m       `bool` property cannot take, and the title falls back to the file name so
+[31m|[m       such a row names its note instead of drawing as an empty line.
+[31m|[m     
+[31m|[m     Four claims are covered. tests/test_notelistmodel.cpp asserts that
+[31m|[m     closeRoot() empties the model in the same call rather than 20 ms later, that
+[31m|[m     a switch to another vault lands on that vault's notes and only those, that
+[31m|[m     several notes written in quick succession are still one rebuild rather than
+[31m|[m     one per file, and that a row whose note has gone answers in type.
+[31m|[m     tests/tst_uiremediation.qml makes the first two of those at the pane, reached
+[31m|[m     by object name.
+[31m|[m     
+[31m|[m     Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+[31m|[m     Claude-Session: https://claude.ai/code/session_01WKnPeAHGX2Tw6cAM2Lvpji
+[31m|[m 
+[31m|[m  src/application/notelistmodel.cpp |  74 [32m+++++++++++[m[31m----[m
+[31m|[m  tests/test_notelistmodel.cpp      | 136 [32m++++++++++++++++++++++++++++[m
+[31m|[m  tests/tst_uiremediation.qml       |  86 [32m++++++++++++++++++[m
+[31m|[m  3 files changed, 280 insertions(+), 16 deletions(-)
+[31m|[m 
+* [33mcommit c13dc1a267e2f088050109bf121ee99d64e66312[m
+[31m|[m Author: kvit-s <info@kvit.app>
+[31m|[m Date:   Sun Sep 13 04:41:19 2026 -0500
+[31m|[m 
+[31m|[m     Take the interface layer's status bar fact explanation
+[31m|[m     
+[31m|[m     A status bar fact can now say the state it is in as its tooltip and accessible
+[31m|[m     description. Nothing this editor draws is affected: it imports Kvit rather than
+[31m|[m     Kvit.Ui and draws no status bar of the library's, so the pointer is all that
+[31m|[m     moves here.
+[31m|[m     
+[31m|[m     Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+[31m|[m     Claude-Session: https://claude.ai/code/session_01WTQKe2GxgUS6kNz1jupYiW
+[31m|[m 
+[31m|[m  third_party/kvit-ui | 2 [32m+[m[31m-[m
+[31m|[m  1 file changed, 1 insertion(+), 1 deletion(-)
+[31m|[m 
+* [33mcommit 9640c34dfec7367e12f03307ef6cee6716b81bc6[m
+[31m|[m Author: kvit-s <info@kvit.app>
+[31m|[m Date:   Sun Sep 13 04:39:43 2026 -0500
+[31m|[m 
+[31m|[m     Take the interface layer's quiet status bar
+[31m|[m     
+[31m|[m     The shared bar wrote a QML warning for every fact whenever its groups were
+[31m|[m     replaced, which is often. Nothing this editor draws is affected: it imports
+[31m|[m     Kvit rather than Kvit.Ui and draws no status bar of the library's, so the
+[31m|[m     pointer is all that moves here.
+[31m|[m     
+[31m|[m     Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+[31m|[m     Claude-Session: https://claude.ai/code/session_01WTQKe2GxgUS6kNz1jupYiW
+[31m|[m 
+[31m|[m  third_party/kvit-ui | 2 [32m+[m[31m-[m
+[31m|[m  1 file changed, 1 insertion(+), 1 deletion(-)
+[31m|[m 
+* [33mcommit 661a58f95a3a2f3f877cd6daef73b7cb0b26ccd9[m
+[31m|[m Author: kvit-s <info@kvit.app>
+[31m|[m Date:   Sun Sep 13 03:57:10 2026 -0500
+[31m|[m 
+[31m|[m     Take the interface layer's status bar group placement
+[31m|[m 
+[31m|[m  third_party/kvit-ui | 2 [32m+[m[31m-[m
+[31m|[m  1 file changed, 1 insertion(+), 1 deletion(-)

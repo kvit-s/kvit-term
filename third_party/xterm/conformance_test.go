@@ -9,7 +9,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/gitpod-io/xterm-go"
+	xterm "github.com/kvit-s/kvit-term/third_party/xterm"
 )
 
 // goldenTestCase matches the JSON structure produced by conformance/generate.mjs.

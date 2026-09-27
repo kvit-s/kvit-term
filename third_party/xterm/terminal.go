@@ -407,6 +407,11 @@ func (t *Terminal) RegisterOscHandler(ident int, handler OscHandler) Disposable 
 	return t.inputHandler.parser.RegisterOscHandler(ident, handler)
 }
 
+// Parser returns the escape-sequence parser, for handlers the Register
+// methods do not cover, such as a fallback for OSC commands that no handler
+// claims. (Kvit's addition; see KVIT-PATCH.md.)
+func (t *Terminal) Parser() *EscapeSequenceParser { return t.inputHandler.Parser() }
+
 // NormalBuffer returns the normal (primary) buffer.
 func (t *Terminal) NormalBuffer() *Buffer { return t.bufferService.Buffers.Normal() }
 
@@ -493,6 +498,14 @@ func (t *Terminal) RegisterMarker(cursorYOffset int) *Marker {
 // AddMarker creates a marker at the cursor position plus the given offset.
 func (t *Terminal) AddMarker(cursorYOffset int) *Marker {
 	return t.RegisterMarker(cursorYOffset)
+}
+
+// SetScrollback changes the scrollback buffer size, dropping the oldest
+// lines at once when it shrinks. (Kvit's addition; see KVIT-PATCH.md.)
+func (t *Terminal) SetScrollback(n int) {
+	n = max(0, n)
+	t.optionsService.Options.Scrollback = n
+	t.bufferService.Buffers.SetScrollback(n)
 }
 
 // Scrollback returns the scrollback buffer size.

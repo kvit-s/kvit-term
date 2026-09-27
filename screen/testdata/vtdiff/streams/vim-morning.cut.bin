@@ -1,0 +1,23 @@
+[?1049h[22;0;0t[>4;2m[?1h=[?2004h[?1004h[1;24r[?12h[?12l[22;2t[22;1t[27m[23m[29m[m[H[2J[?25l[24;1H"~/kvit-notes/README.md" 180L, 9271B[38;5;16m[48;5;254m[2;1H▽[6n[29m[m[38;5;16m[48;5;254m[2;1H  [3;1HPzz\[0%m[6n[3;1H           [1;1H[>c]10;?]11;?[27m[23m[29m[m[38;5;16m[48;5;254m[H[2J[1;1H[38;5;124m  1 [m[38;5;16m[48;5;254m[38;5;62m# [m[38;5;16m[48;5;254m[1m[38;5;124mKvit Notes[m[38;5;16m[48;5;254m
+[38;5;124m  2 
+  3 [m[38;5;16m[48;5;254m[![[4m[38;5;62mCI[m[38;5;16m[48;5;254m]([38;5;201m[48;5;255mhttps://github.com/kvit-s/kvit-notes/actions/workflows/ci.yml/badge.ss[m[38;5;16m[48;5;254m[4;1H[38;5;124m    [m[38;5;16m[48;5;254m[38;5;201m[48;5;255mvg[m[38;5;16m[48;5;254m)]([38;5;201m[48;5;255mhttps://github.com/kvit-s/kvit-notes/actions/workflows/ci.yml[m[38;5;16m[48;5;254m)
+[38;5;124m  4 [m[38;5;16m[48;5;254m[![[4m[38;5;62mLatest release[m[38;5;16m[48;5;254m]([38;5;201m[48;5;255mhttps://img.shields.io/github/v/release/kvit-s/kvit-notess[m[38;5;16m[48;5;254m[6;1H[38;5;124m    [m[38;5;16m[48;5;254m[38;5;201m[48;5;255m?include_prereleases[m[38;5;16m[48;5;254m)]([38;5;201m[48;5;255mhttps://github.com/kvit-s/kvit-notes/releases/latest[m[38;5;16m[48;5;254m)[7;1H[38;5;124m  5 [m[38;5;16m[48;5;254m[![[4m[38;5;62mLicense: MPL-2.0[m[38;5;16m[48;5;254m]([38;5;201m[48;5;255mhttps://img.shields.io/badge/license-MPL--2.0-blue[m[38;5;16m[48;5;254m)]([38;5;201m[48;5;255mLII[m[38;5;16m[48;5;254m[8;1H[38;5;124m    [m[38;5;16m[48;5;254m[38;5;201m[48;5;255mCENSE[m[38;5;16m[48;5;254m)
+[38;5;124m  6 
+  7 [m[38;5;16m[48;5;254mKvit Notes is a native markdown block editor and notes app: your notes are
+[38;5;124m  8 [m[38;5;16m[48;5;254mplain [38;5;62m`[m[38;5;16m[48;5;254m.md[38;5;62m`[m[38;5;16m[48;5;254m files on disk, shown fully rendered, with the raw syntax of a
+[38;5;124m  9 [m[38;5;16m[48;5;254mspan revealed only while your cursor is inside it.
+[38;5;124m 10 
+ 11 [m[38;5;16m[48;5;254m![[4m[38;5;62mThe three-pane shell: live-preview editing with inline math, a callout, a  [m[38;5;16m[48;5;254m[15;1H[38;5;124m    [m[38;5;16m[48;5;254m[4m[38;5;62mtable, and a natively rendered Mermaid flowchart[m[38;5;16m[48;5;254m]([38;5;201m[48;5;255mscreenshots/press/hero-shee[m[38;5;16m[48;5;254m[16;1H[38;5;124m    [m[38;5;16m[48;5;254m[38;5;201m[48;5;255mll.png[m[38;5;16m[48;5;254m)
+[38;5;124m 12 
+ 13 [m[38;5;16m[48;5;254m**[See it working](gallery.md)**: fourteen short clips of the real
+[38;5;124m 14 [m[38;5;16m[48;5;254mapplication, one per feature, with a paragraph on each.
+[38;5;124m 15 
+ 16 [m[38;5;16m[48;5;254m[38;5;62m## [m[38;5;16m[48;5;254m[1m[38;5;124mDownload[m[38;5;16m[48;5;254m
+[38;5;124m 17 
+ 18 [m[38;5;16m[48;5;254m| Platform | Install |[1;5H[?25h[?25l[1;23r[1;1H[11M[1;24r[13;1H[38;5;124m 19 [m[38;5;16m[48;5;254m|---|---|
+[38;5;124m 20 [m[38;5;16m[48;5;254m| Linux | [[4m[38;5;62mAppImage[m[38;5;16m[48;5;254m]([38;5;201m[48;5;255mhttps://github.com/kvit-s/kvit-notes/releases/latest[m[38;5;16m[48;5;254m) ·[14;80H· [15;1H[38;5;124m    [m[38;5;16m[48;5;254m AUR [38;5;62m`[m[38;5;16m[48;5;254mkvit-notes-bin[38;5;62m`[m[38;5;16m[48;5;254m |
+[38;5;124m 21 [m[38;5;16m[48;5;254m| Windows | [[4m[38;5;62mInstaller or portable zip[m[38;5;16m[48;5;254m]([38;5;201m[48;5;255mhttps://github.com/kvit-s/kvit-notess[m[38;5;16m[48;5;254m[17;1H[38;5;124m    [m[38;5;16m[48;5;254m[38;5;201m[48;5;255m/releases/latest[m[38;5;16m[48;5;254m) |
+[38;5;124m 22 [m[38;5;16m[48;5;254m| macOS | [[4m[38;5;62mDMG[m[38;5;16m[48;5;254m]([38;5;201m[48;5;255mhttps://github.com/kvit-s/kvit-notes/releases/latest[m[38;5;16m[48;5;254m) (Applee[19;1H[38;5;124m    [m[38;5;16m[48;5;254m Silicon) |
+[38;5;124m 23 
+ 24 [m[38;5;16m[48;5;254mThe Linux download is a self-contained AppImage rather than a system packagee[22;1H[38;5;124m    [m[38;5;16m[48;5;254m:
+[38;5;124m 25 [1;5H[?25h[?4m[?25h[24;1H[m[38;5;16m[48;5;254m[39;49m[?1004l[?2004l[?1l>

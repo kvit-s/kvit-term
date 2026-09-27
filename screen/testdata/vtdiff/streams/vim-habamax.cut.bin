@@ -1,0 +1,30 @@
+[?1049h[22;0;0t[>4;2m[?1h=[?2004h[?1004h[1;24r[?12h[?12l[22;2t[22;1t[27m[23m[29m[m[H[2J[?25l[24;1H"~/kvit-term/src/core/screen.cpp" 746L, 26987B[38;5;250m[48;5;234m[2;1H▽[6n[29m[m[38;2;188;188;188m[48;2;28;28;28m[2;1H  [3;1HPzz\[0%m[6n[3;1H           [1;1H[>c]10;?]11;?[27m[23m[29m[m[38;2;188;188;188m[48;2;28;28;28m[H[2J[1;1H[38;2;118;118;118m// The emulator, on top of libvterm.
+//
+// libvterm parses the escape sequences and keeps the visible screen; this
+// class keeps everything libvterm deliberately leaves to its caller —[4;71H the
+// scrollback, the modes a view needs to know about, and the translation
+// between Qt's idea of a key press and the bytes a terminal sends for it.
+//
+// One piece of bookkeeping here is less obvious than the rest, and §[8;70H"wrapped
+// lines" below explains it: which stored lines began as the overflow of the
+// line above.[m[38;2;188;188;188m[48;2;28;28;28m
+[38;2;175;175;135m#include [m[38;2;188;188;188m[48;2;28;28;28m[38;2;135;175;135m"kvitterm/screen.h"[m[38;2;188;188;188m[48;2;28;28;28m
+
+[38;2;175;175;135m#include [m[38;2;188;188;188m[48;2;28;28;28m[38;2;135;175;135m"scrollback.h"[m[38;2;188;188;188m[48;2;28;28;28m
+
+[38;2;175;175;135m#include [m[38;2;188;188;188m[48;2;28;28;28m[38;2;135;175;135m<QtCore/QVarLengthArray>[m[38;2;188;188;188m[48;2;28;28;28m
+
+[38;2;135;175;215mextern[m[38;2;188;188;188m[48;2;28;28;28m [38;2;135;175;135m"C"[m[38;2;188;188;188m[48;2;28;28;28m {
+[38;2;175;175;135m#include [m[38;2;188;188;188m[48;2;28;28;28m[38;2;135;175;135m<vterm.h>[m[38;2;188;188;188m[48;2;28;28;28m
+}
+
+[38;2;135;175;215mnamespace[m[38;2;188;188;188m[48;2;28;28;28m kvitterm {
+
+[38;2;135;175;215mnamespace[m[38;2;188;188;188m[48;2;28;28;28m {[1;1H[?25h[?25l[1;23r[1;1H[11M[1;24r[14;1H[38;2;118;118;118m// libvterm marks the right-hand half of a double-width character with this
+// value rather than with a separate flag.[m[38;2;188;188;188m[48;2;28;28;28m
+[38;2;135;175;215mconstexpr[m[38;2;188;188;188m[48;2;28;28;28m [38;2;135;175;215muint32_t[m[38;2;188;188;188m[48;2;28;28;28m WideCharContinuation = [38;2;135;175;215muint32_t[m[38;2;188;188;188m[48;2;28;28;28m(-[38;2;215;135;95m1[m[38;2;188;188;188m[48;2;28;28;28m);
+
+Color colorFrom([38;2;135;175;215mconst[m[38;2;188;188;188m[48;2;28;28;28m VTermColor &color)
+{
+    Color result;
+    [38;2;175;135;175mif[m[38;2;188;188;188m[48;2;28;28;28m (VTERM_COLOR_IS_DEFAULT_FG(&color) || VTERM_COLOR_IS_DEFAULT_BG(&color))  [22;1H{[23;9Hresult.kind = Color::Default;[1;1H[?25h[?4m[?25h[24;1H[39;49m[?1004l[?2004l[?1l>

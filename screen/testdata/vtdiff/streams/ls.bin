@@ -1,0 +1,80 @@
+total 698364
+drwxr-xr-x  2 root root       40960 Sep 26 06:16 [0m[01;34m.[0m
+drwxr-xr-x 13 root root        4096 Jan 23  2026 [01;34m..[0m
+-rwxr-xr-x  1 root root          38 Apr 11  2024 [01;32m7z[0m
+-rwxr-xr-x  1 root root          39 Apr 11  2024 [01;32m7za[0m
+-rwxr-xr-x  1 root root          39 Apr 11  2024 [01;32m7zr[0m
+lrwxrwxrwx  1 root root          28 May 27  2024 [01;36mFileCheck-18[0m -> [01;32m../lib/llvm-18/bin/FileCheck[0m
+lrwxrwxrwx  1 root root           4 Feb 10  2024 [01;36mNF[0m -> [01;32mcol1[0m
+-rwxr-xr-x  1 root root      166776 Jan 28  2023 [01;32mTreeLauncherSubreaper[0m
+-rwxr-xr-x  1 root root       14336 Jan 28  2023 [01;32mTreeLauncherTargetLdPreloadHelper[0m
+lrwxrwxrwx  1 root root          46 May 27  2024 [01;36mUnicodeNameMappingGenerator-18[0m -> [01;32m../lib/llvm-18/bin/UnicodeNameMappingGenerator[0m[K
+lrwxrwxrwx  1 root root           1 Apr  8  2024 [01;36mX11[0m -> [01;34m.[0m
+-rwxr-xr-x  1 root root       55744 Aug 25 10:09 [01;32m[[0m
+-rwxr-xr-x  1 root root      659024 Jan 28  2023 [01;32m__nvcc_device_query[0m
+-rwxr-xr-x  1 root root       18744 Aug 15  2025 [01;32maa-enabled[0m
+-rwxr-xr-x  1 root root       18744 Aug 15  2025 [01;32maa-exec[0m
+-rwxr-xr-x  1 root root       18736 Aug 15  2025 [01;32maa-features-abi[0m
+lrwxrwxrwx  1 root root          37 Mar 31  2024 [01;36madb[0m -> [01;32m../lib/android-sdk/platform-tools/adb[0m
+-rwxr-xr-x  1 root root       16422 Jul  2  2025 [01;32madd-apt-repository[0m
+-rwxr-xr-x  1 root root       14720 Aug 19 11:47 [01;32maddpart[0m
+lrwxrwxrwx  1 root root          26 Dec  3  2025 [01;36maddr2line[0m -> [01;32mx86_64-linux-gnu-addr2line[0m
+-rwxr-xr-x  1 root root       22928 Apr  7  2024 [01;32mambiguous_words[0m
+-rwxr-xr-x  1 root root        2322 Apr 18  2024 [01;32mapport-bug[0m
+-rwxr-xr-x  1 root root       13625 Jul  8  2025 [01;32mapport-cli[0m
+lrwxrwxrwx  1 root root          10 Jul  8  2025 [01;36mapport-collect[0m -> [01;32mapport-bug[0m
+-rwxr-xr-x  1 root root        3790 Jul  8  2025 [01;32mapport-unpack[0m
+-rwxr-xr-x  1 root root       14648 Mar 31  2024 [01;32mappres[0m
+-rwxr-xr-x  1 root root      141544 Apr  8  2024 [01;32mappstreamcli[0m
+lrwxrwxrwx  1 root root           6 Apr  8  2024 [01;36mapropos[0m -> [01;32mwhatis[0m
+-rwxr-xr-x  1 root root       18824 Oct 22  2024 [01;32mapt[0m
+lrwxrwxrwx  1 root root          18 Jul  2  2025 [01;36mapt-add-repository[0m -> [01;32madd-apt-repository[0m
+-rwxr-xr-x  1 root root       88544 Oct 22  2024 [01;32mapt-cache[0m
+-rwxr-xr-x  1 root root       27104 Oct 22  2024 [01;32mapt-cdrom[0m
+-rwxr-xr-x  1 root root       31120 Oct 22  2024 [01;32mapt-config[0m
+-rwxr-xr-x  1 root root       23008 Oct 22  2024 [01;32mapt-extracttemplates[0m
+-rwxr-xr-x  1 root root      227816 Oct 22  2024 [01;32mapt-ftparchive[0m
+-rwxr-xr-x  1 root root       51680 Oct 22  2024 [01;32mapt-get[0m
+-rwxr-xr-x  1 root root       28664 Oct 22  2024 [01;32mapt-key[0m
+-rwxr-xr-x  1 root root       55776 Oct 22  2024 [01;32mapt-mark[0m
+-rwxr-xr-x  1 root root       51608 Oct 22  2024 [01;32mapt-sortpkgs[0m
+lrwxrwxrwx  1 root root          19 Dec  3  2025 [01;36mar[0m -> [01;32mx86_64-linux-gnu-ar[0m
+-rwxr-xr-x  1 root root       35336 Aug 25 10:09 [01;32march[0m
+lrwxrwxrwx  1 root root          19 Dec  3  2025 [01;36mas[0m -> [01;32mx86_64-linux-gnu-as[0m
+lrwxrwxrwx  1 root root          17 Mar 30  2024 [01;36masan_symbolize[0m -> [01;32masan_symbolize-18[0m
+-rwxr-xr-x  1 root root       42995 May 27  2024 [01;32masan_symbolize-18[0m
+-rwxr-xr-x  1 root root      154096 Apr  8  2024 [01;32maspell[0m
+-rwxr-xr-x  1 root root        2044 Apr  8  2024 [01;32maspell-import[0m
+-rwxr-xr-x  1 root root         984 Jan  2  2024 [01;32mautomat-visualize3[0m
+lrwxrwxrwx  1 root root          21 Apr  8  2024 [01;36mawk[0m -> [01;32m/etc/alternatives/awk[0m
+-rwxr-xr-x  1 root root       55816 Aug 25 10:09 [01;32mb2sum[0m
+-rwxr-xr-x  1 root root       39432 Aug 25 10:09 [01;32mbase32[0m
+-rwxr-xr-x  1 root root       39432 Aug 25 10:09 [01;32mbase64[0m
+-rwxr-xr-x  1 root root       35336 Aug 25 10:09 [01;32mbasename[0m
+-rwxr-xr-x  1 root root       47624 Aug 25 10:09 [01;32mbasenc[0m
+-rwxr-xr-x  1 root root     1446024 Mar 31  2024 [01;32mbash[0m
+-rwxr-xr-x  1 root root        6988 Mar 31  2024 [01;32mbashbug[0m
+-rwxr-xr-x  1 root root       93000 Apr  8  2024 [01;32mbc[0m
+-rwxr-xr-x  1 root root       88848 Jan 28  2023 [01;32mbin2c[0m
+-rwxr-xr-x  1 root root      125240 Jan 27  2025 [01;32mbroadwayd[0m
+-rwxr-xr-x  1 root root     1025280 Mar 31  2024 [01;32mbtrfs[0m
+-rwxr-xr-x  1 root root      590128 Mar 31  2024 [01;32mbtrfs-convert[0m
+-rwxr-xr-x  1 root root      532784 Mar 31  2024 [01;32mbtrfs-find-root[0m
+-rwxr-xr-x  1 root root      565552 Mar 31  2024 [01;32mbtrfs-image[0m
+-rwxr-xr-x  1 root root      532784 Mar 31  2024 [01;32mbtrfs-map-logical[0m
+-rwxr-xr-x  1 root root      528688 Mar 31  2024 [01;32mbtrfs-select-super[0m
+lrwxrwxrwx  1 root root           5 Mar 31  2024 [01;36mbtrfsck[0m -> [01;32mbtrfs[0m
+-rwxr-xr-x  1 root root      557360 Mar 31  2024 [01;32mbtrfstune[0m
+lrwxrwxrwx  1 root root          27 May 27  2024 [01;36mbugpoint-18[0m -> [01;32m../lib/llvm-18/bin/bugpoint[0m
+-rwxr-xr-x  3 root root       39296 Aug 26 23:05 [01;32mbunzip2[0m
+-rwxr-xr-x  1 root root       96864 Jul 28 10:04 [01;32mbusctl[0m
+-rwxr-xr-x  1 root root       72160 Sep 17 15:12 [01;32mbwrap[0m
+-rwxr-xr-x  1 root root        8703 Feb 10  2024 [01;32mbyobu[0m
+-rwxr-xr-x  1 root root         996 Feb 10  2024 [01;32mbyobu-config[0m
+-rwxr-xr-x  1 root root        4774 Feb 10  2024 [01;32mbyobu-ctrl-a[0m
+-rwxr-xr-x  1 root root        1295 Feb 10  2024 [01;32mbyobu-disable[0m
+-rwxr-xr-x  1 root root        1341 Feb 10  2024 [01;32mbyobu-disable-prompt[0m
+-rwxr-xr-x  1 root root        1182 Feb 10  2024 [01;32mbyobu-enable[0m
+-rwxr-xr-x  1 root root        1453 Feb 10  2024 [01;32mbyobu-enable-prompt[0m
+-rwxr-xr-x  1 root root        1421 Feb 10  2024 [01;32mbyobu-export[0m
+-rwxr-xr-x  1 root root        7209 Feb 10  2024 [01;32mbyobu-janitor[0m

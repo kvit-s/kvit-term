@@ -46,6 +46,13 @@ type Buffer struct {
 
 	Markers []*Marker
 
+	// Trimmed counts the lines removed from the top of Lines since the
+	// buffer was made: scrolled out of a full scrollback, cut when it
+	// shrinks, or erased with the rest of the scrollback. Added to YBase it
+	// numbers a line from the first one ever written, which stays put while
+	// lines scroll away. (Kvit's addition; see KVIT-PATCH.md.)
+	Trimmed int
+
 	cols          int
 	rows          int
 	hasScrollback bool
@@ -75,6 +82,7 @@ func NewBuffer(opts BufferOptions) *Buffer {
 		b.tabStopWidth = 8
 	}
 	b.Lines = NewCircularList[*BufferLine](b.getCorrectBufferLength(b.rows))
+	b.countTrims()
 	b.ScrollTop = 0
 	b.ScrollBottom = b.rows - 1
 	b.SetupTabStops(-1)
@@ -166,9 +174,15 @@ func (b *Buffer) Clear() {
 	b.Y = 0
 	b.X = 0
 	b.Lines = NewCircularList[*BufferLine](b.getCorrectBufferLength(b.rows))
+	b.countTrims()
 	b.ScrollTop = 0
 	b.ScrollBottom = b.rows - 1
 	b.SetupTabStops(-1)
+}
+
+// countTrims keeps Trimmed up to date for the current Lines.
+func (b *Buffer) countTrims() {
+	b.Lines.OnTrimEmitter.Event(func(n int) { b.Trimmed += n })
 }
 
 // Resize adjusts the buffer dimensions. Handles row/column changes and reflow.

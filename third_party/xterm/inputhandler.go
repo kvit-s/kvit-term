@@ -535,6 +535,14 @@ func (h *InputHandler) Print(data []uint32, start, end int) {
 				buf.X++
 			}
 		}
+
+		// Without autowrap the cursor stays on the last column rather than
+		// waiting there to wrap, as in xterm, so a character written after
+		// autowrap is switched on again overwrites that column instead of
+		// starting a new line. (Kvit's change; see KVIT-PATCH.md.)
+		if !wraparoundMode && buf.X >= cols {
+			buf.X = cols - 1
+		}
 	}
 
 	// Handle wide chars: reset cell to the right if it's a second cell of a wide char.

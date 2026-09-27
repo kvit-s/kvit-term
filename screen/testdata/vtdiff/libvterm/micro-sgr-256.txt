@@ -1,0 +1,41 @@
+cursor 0 16
+R0 xxxxxxxxxxxxxxxx
+R1 
+R2 
+R3 
+R4 
+R5 
+R6 
+R7 
+R8 
+R9 
+R10 
+R11 
+R12 
+R13 
+R14 
+R15 
+R16 
+R17 
+R18 
+R19 
+R20 
+R21 
+R22 
+R23 
+S0,0 i0 D -
+S0,1 i17 D -
+S0,2 i34 D -
+S0,3 i51 D -
+S0,4 i68 D -
+S0,5 i85 D -
+S0,6 i102 D -
+S0,7 i119 D -
+S0,8 i136 D -
+S0,9 i153 D -
+S0,10 i170 D -
+S0,11 i187 D -
+S0,12 i204 D -
+S0,13 i221 D -
+S0,14 i238 D -
+S0,15 i255 D -
