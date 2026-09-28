@@ -228,6 +228,37 @@ func TestTheBellIsReported(t *testing.T) {
 	}
 }
 
+func TestWholeScreenReverseVideoIsTracked(t *testing.T) {
+	// DECSCNM, mode 5: the Qt library tracked it and never drew it, so
+	// neither version changes what is shown because of it.
+	s := New(20, 2)
+	if s.ReverseVideo() {
+		t.Fatal("started reversed")
+	}
+	feed(s, "plain")
+	feed(s, "\x1b[?5h")
+	if !s.ReverseVideo() {
+		t.Fatal("CSI ? 5 h did not set reverse video")
+	}
+	if got := rowText(s, 0); got != "plain" {
+		t.Errorf("setting it changed row 0 to %q", got)
+	}
+	out := written(s)
+	feed(s, "\x1b[?5$p")
+	if got := out.String(); got != "\x1b[?5;1$y" {
+		t.Errorf("DECRQM after set = %q", got)
+	}
+	out.Reset()
+	feed(s, "\x1b[?5l")
+	if s.ReverseVideo() {
+		t.Fatal("CSI ? 5 l did not reset reverse video")
+	}
+	feed(s, "\x1b[?5$p")
+	if got := out.String(); got != "\x1b[?5;2$y" {
+		t.Errorf("DECRQM after reset = %q", got)
+	}
+}
+
 func TestUnhandledOperatingSystemCommandsReachTheCaller(t *testing.T) {
 	// The seam the shell-integration layer is built on: the emulator acts
 	// on the commands it knows and hands the rest here.

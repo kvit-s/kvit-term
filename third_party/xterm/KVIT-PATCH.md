@@ -61,6 +61,13 @@ Each is marked in the source with "Kvit's change" or "Kvit's addition".
    a terminal full of `git log` output to two columns, the kind of size a
    window's layout can give for a moment. The surplus is now skipped;
    `screen.TestNarrowingAFullScrollbackDoesNotLoseTheScreen` held it.
+9. **Whole-screen reverse video** (`types.go`, `inputhandler_csi.go`):
+   DECSCNM, mode 5 (`CSI ? 5 h` / `CSI ? 5 l`), with its DECRQM report.
+   Upstream ignores it; the Qt library tracked it through libvterm's
+   `VTERM_PROP_REVERSE` and never drew it. The copy tracks it the same way,
+   and `screen.ReverseVideo` reports it, so the checklist's last emulator
+   item matches the Qt library exactly while drawing nothing differently.
+   `screen.TestWholeScreenReverseVideoIsTracked` holds it.
 
 ## Updating
 

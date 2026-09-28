@@ -47,7 +47,7 @@ the Qt library and the Go equivalent of each, so that step can start from it.
 - [x] Answers to questions about the terminal. Evidence: `TestTheTerminalAnswersQuestionsAboutItself`
 - [x] Cursor shape, blinking and visibility. Evidence: `TestTheCursorsShapeAndVisibilityFollowTheProgram`
 - [x] The same screens as libvterm on 62 of 73 recorded streams, with the other eleven explained. Evidence: `TestRecordedStreamsMatchLibvterm`
-- [ ] Whole-screen reverse video (DECSCNM, mode 5): xterm-go does not act on it. The Qt library tracked it and never drew it, so neither version shows it.
+- [x] Whole-screen reverse video (DECSCNM, mode 5): tracked as the Qt library tracked it through libvterm's `VTERM_PROP_REVERSE`, and, as there, never drawn, so neither version changes what is shown because of it. Evidence: `TestWholeScreenReverseVideoIsTracked` (set, reset and DECRQM); KVIT-PATCH.md item 9
 
 ## Input the child receives
 

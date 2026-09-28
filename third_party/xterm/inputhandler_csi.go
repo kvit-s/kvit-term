@@ -637,8 +637,10 @@ func (h *InputHandler) resetMode(params *Params) bool {
 func (h *InputHandler) setModePrivate(params *Params) bool {
 	for i := range params.Length {
 		switch params.Params[i] {
-		case 1:
+	case 1:
 			h.coreService.DecPrivateModes.ApplicationCursorKeys = true
+		case 5: // Kvit's addition: DECSCNM, whole-screen reverse video, tracked as the Qt library tracked it
+			h.coreService.DecPrivateModes.ReverseVideo = true
 		case 6:
 			h.coreService.DecPrivateModes.Origin = true
 			h.setCursor(0, 0)
@@ -703,8 +705,10 @@ func (h *InputHandler) setModePrivate(params *Params) bool {
 func (h *InputHandler) resetModePrivate(params *Params) bool {
 	for i := range params.Length {
 		switch params.Params[i] {
-		case 1:
+	case 1:
 			h.coreService.DecPrivateModes.ApplicationCursorKeys = false
+		case 5: // Kvit's addition: DECSCNM, whole-screen reverse video, tracked as the Qt library tracked it
+			h.coreService.DecPrivateModes.ReverseVideo = false
 		case 6:
 			h.coreService.DecPrivateModes.Origin = false
 			h.setCursor(0, 0)
@@ -801,6 +805,8 @@ func (h *InputHandler) privateModeSetting(mode int) int {
 	switch mode {
 	case 1:
 		return boolToPm(dm.ApplicationCursorKeys)
+	case 5: // Kvit's addition: DECSCNM, whole-screen reverse video, tracked as the Qt library tracked it
+		return boolToPm(dm.ReverseVideo)
 	case 6:
 		return boolToPm(dm.Origin)
 	case 7:

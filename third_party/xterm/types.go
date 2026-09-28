@@ -71,6 +71,7 @@ type DecPrivateModes struct {
 	MouseEncoding         string       // "DEFAULT", "SGR", "SGR_PIXELS"
 	MouseTrackingMode     string       // "NONE", "X10", "VT200", "DRAG", "ANY"
 	Origin                bool
+	ReverseVideo          bool // Kvit's addition: DECSCNM, mode 5, tracked as the Qt library tracked it
 	ReverseWraparound     bool
 	SendFocus             bool
 	SynchronizedOutput    bool
