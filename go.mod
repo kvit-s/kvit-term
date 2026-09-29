@@ -4,9 +4,9 @@ go 1.27.0
 
 toolchain go1.27.1
 
-replace github.com/kvit-s/kvit-ui => ../kvit-ui-go
+replace github.com/kvit-s/kvit-ui => ../kvit-ui
 
-replace github.com/go-text/typesetting => ../kvit-ui-go/third_party/typesetting
+replace github.com/go-text/typesetting => ../kvit-ui/third_party/typesetting
 
 require (
 	github.com/creack/pty v1.1.24
