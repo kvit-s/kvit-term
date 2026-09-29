@@ -72,8 +72,10 @@ Give the command behind every number, and save screenshots under
 ~/kvit-ui-go/tools/check-all.sh   # ./build.sh --test in every Kvit Go repository
 ```
 
-The git hook in `.githooks/pre-commit` runs `./build.sh --test`
-(`git config core.hooksPath .githooks` enables it in a fresh clone).
+The git hook in `.githooks/pre-commit` checks the Go files a commit changes:
+`gofmt` on them and `go vet` on their packages, in a few seconds. It does
+not run the tests, so run `./build.sh --test` before committing work
+(`git config core.hooksPath .githooks` enables the hook in a fresh clone).
 
 `--win-test` and `--win-check` run programs on the Windows desktop from WSL.
 The check opens a window for about 40 seconds, twice, types into the shell
