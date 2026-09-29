@@ -1,7 +1,7 @@
 package kvitterm
 
 // Finding text in what a terminal has shown, screen and scrollback
-// together. These are the Qt library's tests
+// together. These are the library's tests
 // (tests/unit/test_terminalsearch.cpp), case for case.
 
 import (

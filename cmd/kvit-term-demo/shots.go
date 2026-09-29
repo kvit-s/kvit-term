@@ -22,7 +22,7 @@ import (
 	"github.com/richardwilkes/unison/enums/align"
 )
 
-// qtSample is what the Qt library's docs/terminal.png shows: colours in all
+// qtSample is what the library's docs/terminal.png shows: colours in all
 // three encodings, the text attributes, accents, a progress line redrawn in
 // place, and a path a compiler would print.
 const qtSample = "$ ./demo.sh\r\n" +
@@ -67,7 +67,7 @@ func writeShots(dir string) error {
 	}
 	defer scr.Stop()
 
-	// The Qt library's sample, in its default colours and a 760 × 260 view.
+	// The  library's sample, in its default colours and a 760 × 260 view.
 	var w *unison.Window
 	var term *view.View
 	s := kvitterm.NewSession()
@@ -78,7 +78,7 @@ func writeShots(dir string) error {
 			return
 		}
 		term = view.New(ui.Fonts)
-		// The Qt image's font size and margin, so the two line up.
+		// The  image's font size and margin, so the two line up.
 		term.SetFont("", 15)
 		w.Content().SetBorder(unison.NewEmptyBorder(geom.NewUniformInsets(8)))
 		term.SetSession(s)

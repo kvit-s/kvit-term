@@ -1,5 +1,5 @@
 // Command kvit-term-demo is a window with one terminal: the demonstration
-// program of the Qt kvit-term, rebuilt on unison and the Kvit components.
+// program of the kvit-term, rebuilt on unison and the Kvit components.
 // It shows a find bar on Ctrl+Shift+F, a heading naming the command whose
 // output is at the top of the window, Ctrl+click on paths and addresses,
 // and one shortcut the application keeps for itself (Ctrl+Shift+N).

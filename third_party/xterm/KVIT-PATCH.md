@@ -6,7 +6,7 @@ This directory is a copy of github.com/gitpod-io/xterm-go at commit
 under the MIT licence (`LICENSE`). It is kept here rather than used as a
 dependency because the project is young — created in 2026-03, mostly
 machine-written, with no releases — so kvit-term changes only when this copy
-is changed on purpose, as the Qt kvit-term kept libvterm.
+is changed on purpose.
 
 Its tests run with the rest (`go test ./third_party/xterm`), and
 `screen/vtdiff_test.go` compares the emulator with libvterm on 73 recorded
@@ -63,10 +63,9 @@ Each is marked in the source with "Kvit's change" or "Kvit's addition".
    `screen.TestNarrowingAFullScrollbackDoesNotLoseTheScreen` held it.
 9. **Whole-screen reverse video** (`types.go`, `inputhandler_csi.go`):
    DECSCNM, mode 5 (`CSI ? 5 h` / `CSI ? 5 l`), with its DECRQM report.
-   Upstream ignores it; the Qt library tracked it through libvterm's
-   `VTERM_PROP_REVERSE` and never drew it. The copy tracks it the same way,
-   and `screen.ReverseVideo` reports it, so the checklist's last emulator
-   item matches the Qt library exactly while drawing nothing differently.
+   Upstream ignores it; libvterm tracks it through
+   `VTERM_PROP_REVERSE` and never draws it. The copy tracks it the same way,
+   and `screen.ReverseVideo` reports it while drawing nothing differently.
    `screen.TestWholeScreenReverseVideoIsTracked` holds it.
 
 ## Updating

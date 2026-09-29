@@ -1,28 +1,9 @@
 # kvit-term-go
 
-This repository is the Go version of kvit-term, the terminal the Kvit apps
-embed: a pseudo-terminal layer, an emulator with a scrollback, and a unison
-panel that draws it. The Qt/QML version it replaces is in `~/kvit-term` and
-is the specification; `PARITY.md` here lists what it does and marks what
-exists in Go, with the test or check that shows it. kvit-works is the one
-app that uses it.
-
-This repository is step 7 of moving the Kvit desktop apps from Qt to Go. The
-plan is `~/kvit-shirei/go-ui-plan.md`; read its sections 3 to 6 before
-changing how this repository is laid out or built. How the library works
+This repository is kvit-term, the terminal the Kvit apps embed: a
+pseudo-terminal layer, an emulator with a scrollback, and a unison panel that
+draws it. kvit-works is the one app that uses it. How the library works
 inside, and why, is in `docs/design.md`.
-
-## Recording the migration
-
-The migration is recorded in `~/kvit-shirei/migration-log.md` for a later
-blog post. Append a dated entry there, newest last, when you:
-- finish a step of the plan;
-- make a decision the plan does not cover;
-- find something that works differently from what the plan expects;
-- measure something.
-
-Give the command behind every number, and save screenshots under
-`~/kvit-shirei/migration-log/<date>/`.
 
 ## What is where
 
@@ -40,21 +21,16 @@ Give the command behind every number, and save screenshots under
 
 ## Rules that are easy to break
 
-- **The screen is only touched under the session's lock.** Use the
-  session's methods or `Session.View`. A hook (`screenHooks`) runs under the
-  lock and must not call the session back. `Search` takes the lock itself,
-  so never call it from inside `View`.
+- **The screen is only touched under the session's lock.** Use the session's methods or `Session.View`. A hook (`screenHooks`) runs under the lock and must not call the session back. `Search` takes the lock itself, so never call it from inside `View`.
 - **Events go through `Session.Dispatch`.** An application on unison sets it
   to `unison.InvokeTask`, and so do the view's tests; without it, a test
   that feeds output and then captures the window races the delivery.
 - **The Unix master stays non-blocking.** Never call `Fd()` on it: that makes
   it blocking again, and a blocked read then stops `Hangup` from closing it.
-- **The xterm-go copy changes only on purpose,** with the change marked in
-  the source and listed in `KVIT-PATCH.md`, and `TestRecordedStreamsMatchLibvterm`
+- **The xterm-go copy changes only on purpose,** with the change marked in the source and listed in `KVIT-PATCH.md`, and `TestRecordedStreamsMatchLibvterm`
   run. A stream that starts or stops differing from libvterm changes its
   entry in `knownDifferences`.
-- **Keys are encoded as libvterm encoded them** (`screen/keys.go`), so a
-  program sees the same bytes it saw from the Qt terminal.
+- **Keys are encoded as libvterm encodes them** (`screen/keys.go`), so a program sees the same bytes for the same keys.
 - **Tests never depend on a shell,** except the one that proves the bash
   snippet; everything else runs `termstub`.
 
@@ -83,12 +59,11 @@ through the window's own key dispatch, and never sends input to the desktop.
 
 ## Conventions
 
-- **Module path.** `github.com/kvit-s/kvit-term`, the repository's final
-  name. kvit-ui comes from `../kvit-ui-go` through a `replace` line, and so
-  does kvit-ui's patched go-text; keep both lines.
-- **unison stays unmodified.** Anything missing goes in this repository or in
-  kvit-ui-go, never into unison.
+- **Module path.** `github.com/kvit-s/kvit-term`. kvit-ui comes from
+  `../kvit-ui-go` through a `replace` line, and so does kvit-ui's patched
+  go-text; keep both lines.
+- **unison stays unmodified.** Anything missing goes in this repository or in kvit-ui-go, never into unison.
 - **cgo is off** except for `--race`, and every build must stay
   cross-compilable.
 - **History.** Commit on `main` and keep it linear, with no branches and no
-  merge commits. The switch replays this history commit by commit.
+  merge commits.

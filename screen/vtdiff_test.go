@@ -2,7 +2,7 @@ package screen
 
 // The regression test the migration plan asks for: every recorded stream in
 // testdata/vtdiff fed through the Go screen and compared, cell by cell, with
-// what libvterm 0.3.3 — the emulator of the Qt kvit-term — made of the same
+// what libvterm 0.3.3 — the emulator of the kvit-term — made of the same
 // bytes. The libvterm screens were recorded with tools/vtdiff/vtdump.c
 // while libvterm's source was still at hand; tools/vtdiff/README.md says how
 // to record them again.

@@ -1,7 +1,7 @@
 package screen
 
 // The emulator, proved by feeding it recorded bytes and reading the screen
-// back, with no window and no child process. These are the Qt library's
+// back, with no window and no child process. These are the library's
 // tests (tests/unit/test_screen.cpp), case for case.
 
 import (
@@ -229,7 +229,7 @@ func TestTheBellIsReported(t *testing.T) {
 }
 
 func TestWholeScreenReverseVideoIsTracked(t *testing.T) {
-	// DECSCNM, mode 5: the Qt library tracked it and never drew it, so
+	// DECSCNM, mode 5: the library tracked it and never drew it, so
 	// neither version changes what is shown because of it.
 	s := New(20, 2)
 	if s.ReverseVideo() {
@@ -430,7 +430,7 @@ func TestTheLineWithTheCursorIsLeftToTheProgram(t *testing.T) {
 	// xterm.js, and so xterm-go, does not re-wrap the line the cursor is on:
 	// a shell redraws the line being edited when it is told the new width,
 	// and re-wrapping it as well can leave the prompt drawn twice.
-	// libvterm, which the Qt terminal used, re-wraps it too.
+	// libvterm, which the terminal used, re-wraps it too.
 	s := New(10, 4)
 	feed(s, "0123456789ABCDEFGHIJ")
 	s.SetSize(20, 4)
@@ -440,7 +440,7 @@ func TestTheLineWithTheCursorIsLeftToTheProgram(t *testing.T) {
 }
 
 func TestResizingRewrapsTheScrollbackToo(t *testing.T) {
-	// libvterm re-wraps only the visible screen; the Qt library re-wrapped
+	// libvterm re-wraps only the visible screen; the library re-wrapped
 	// its own scrollback on top, and xterm-go re-wraps both.
 	s := New(10, 4)
 	feed(s, "0123456789ABCDEFGHIJ\r\n")

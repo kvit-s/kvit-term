@@ -547,7 +547,7 @@ func (s *Screen) Title() string { return s.title }
 func (s *Screen) AlternateScreen() bool { return s.t.IsAltBufferActive() }
 
 // ReverseVideo reports whole-screen reverse video (DECSCNM, mode 5). It is
-// tracked as the Qt library tracked it and, as there, never drawn: neither
+// tracked as the library tracked it and, as there, never drawn: neither
 // version changes what is shown because of it.
 func (s *Screen) ReverseVideo() bool { return s.t.DecPrivateModes().ReverseVideo }
 

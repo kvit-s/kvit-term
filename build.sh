@@ -6,7 +6,7 @@
 #   ./build.sh --race        the tests again under the race detector (needs cgo and gcc)
 #   ./build.sh --cross       also build kvit-term-demo for windows/amd64, darwin/arm64,
 #                            darwin/amd64 and linux/amd64 into build/<os>-<arch>/
-#   ./build.sh --shots       draw sample screens into build/shots, the Qt library's
+#   ./build.sh --shots       draw sample screens into build/shots, the library's
 #                            docs/terminal.png stacked above the Go drawing of it
 #   ./build.sh --bench       time the emulator on 16 MB of recorded output
 #   ./build.sh --win         build kvit-term-demo for Windows onto D: and start it there

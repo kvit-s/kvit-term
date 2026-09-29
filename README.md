@@ -3,9 +3,7 @@
 A terminal for Go applications drawn with [unison](https://github.com/richardwilkes/unison):
 a pseudo-terminal layer for Linux, macOS and Windows, a screen and scrollback
 model, and a unison panel that draws it and handles the keyboard, the mouse,
-selection and the clipboard. It is the Go version of the Qt/QML library in
-`~/kvit-term` and takes over that repository's name when the Kvit apps finish
-moving from Qt to Go (the plan is `~/kvit-shirei/go-ui-plan.md`, step 7).
+selection and the clipboard.
 
 ```go
 s := kvitterm.NewSession()          // the user's shell, 80 × 24 until a view sizes it
@@ -86,7 +84,7 @@ methods for Chinese, Japanese and Korean, and the X11 primary selection.
 ./build.sh --test        # gofmt, go vet on three systems, and the tests
 ./build.sh --win-test    # the pty, session and screen tests on Windows, through its pseudoconsole
 ./build.sh --win-check   # the demonstration program on Windows, driven through a scripted check
-./build.sh --shots       # sample screens, the Qt library's sample stacked above the Go drawing of it
+./build.sh --shots       # sample screens into build/shots
 ```
 
 Go 1.27 (fetched by the toolchain line in `go.mod`), with cgo off. The

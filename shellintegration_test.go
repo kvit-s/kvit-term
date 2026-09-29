@@ -3,7 +3,7 @@ package kvitterm
 // What a shell tells the terminal about itself. The marks are fed straight
 // into the screen rather than produced by a real shell, whose version and
 // startup files vary; two cases at the end run the whole path through a
-// pseudo-terminal, one of them with a real bash. These are the Qt library's
+// pseudo-terminal, one of them with a real bash. These are the library's
 // tests (tests/unit/test_shellintegration.cpp), case for case.
 
 import (
