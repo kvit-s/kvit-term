@@ -20,10 +20,10 @@ import (
 	"github.com/richardwilkes/unison/enums/align"
 )
 
-// qtSample is a sample screen: colours in all three encodings, the text
-// attributes, accents, a progress line redrawn in place, and a path a
-// compiler would print.
-const qtSample = "$ ./demo.sh\r\n" +
+// sampleOutput is what a program writes for the sample screen: colours in
+// all three encodings, the text attributes, accents, a progress line redrawn
+// in place, and a path a compiler would print.
+const sampleOutput = "$ ./demo.sh\r\n" +
 	"colours:    \x1b[1;32mbold green\x1b[0m  \x1b[31mred\x1b[0m  \x1b[33myellow\x1b[0m  \x1b[34mblue\x1b[0m  " +
 	"\x1b[38;5;208m256-orange\x1b[0m  \x1b[38;2;120;180;240mtruecolour\x1b[0m\r\n" +
 	"attributes: \x1b[1mbold\x1b[0m  \x1b[4munderline\x1b[0m  \x1b[3mitalic\x1b[0m  \x1b[7mreverse\x1b[0m  " +
@@ -88,7 +88,7 @@ func writeShots(dir string) error {
 	if err != nil {
 		return err
 	}
-	s.Feed([]byte(qtSample))
+	s.Feed([]byte(sampleOutput))
 	scr.Sync()
 	sample := scr.CaptureWindow(w)
 	if err := savePNG(filepath.Join(dir, "terminal.png"), sample); err != nil {

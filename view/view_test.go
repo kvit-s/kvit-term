@@ -304,7 +304,7 @@ func TestAReservedShortcutIsNotConsumed(t *testing.T) {
 	}
 }
 
-func TestShortcutsAreReadAsQtWritesThem(t *testing.T) {
+func TestShortcutsAreReadFromTheirWrittenForm(t *testing.T) {
 	for s, want := range map[string]unison.KeyCode{"Ctrl+Shift+T": unison.KeyT, "F6": unison.KeyF6, "Shift+F6": unison.KeyF6,
 		"Alt+Return": unison.KeyReturn, "Ctrl+PgUp": unison.KeyPageUp, "Ctrl+[": unison.KeyOpenBracket} {
 		if k, _, ok := ParseShortcut(s); !ok || k != want {
