@@ -2,8 +2,7 @@ package kvitterm
 
 // What in a line of output is worth clicking, and what is not. The second
 // half matters more than the first: a detector that turns half of ordinary
-// prose into links is worse than none. These are the library's tests
-// (tests/unit/test_links.cpp), case for case.
+// prose into links is worse than none.
 
 import (
 	"testing"

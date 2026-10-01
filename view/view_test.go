@@ -1,9 +1,8 @@
 package view
 
 // The view driven as an application drives it, on unison's headless
-// screen: the library's view tests (tests/shell/tst_terminalview)
-// and rendering tests (tests/unit/test_rendering.cpp), and the input paths
-// they did not reach, which termstub's raw mode shows byte for byte.
+// screen: what it draws, and the bytes each input path sends, which
+// termstub's raw mode shows byte for byte.
 
 import (
 	"fmt"

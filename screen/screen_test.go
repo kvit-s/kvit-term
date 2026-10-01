@@ -1,8 +1,7 @@
 package screen
 
 // The emulator, proved by feeding it recorded bytes and reading the screen
-// back, with no window and no child process. These are the library's
-// tests (tests/unit/test_screen.cpp), case for case.
+// back, with no window and no child process.
 
 import (
 	"bytes"
@@ -229,8 +228,8 @@ func TestTheBellIsReported(t *testing.T) {
 }
 
 func TestWholeScreenReverseVideoIsTracked(t *testing.T) {
-	// DECSCNM, mode 5: the library tracked it and never drew it, so
-	// neither version changes what is shown because of it.
+	// DECSCNM, mode 5: it is tracked and never drawn, so it does not change
+	// what is shown.
 	s := New(20, 2)
 	if s.ReverseVideo() {
 		t.Fatal("started reversed")
@@ -440,8 +439,8 @@ func TestTheLineWithTheCursorIsLeftToTheProgram(t *testing.T) {
 }
 
 func TestResizingRewrapsTheScrollbackToo(t *testing.T) {
-	// libvterm re-wraps only the visible screen; the library re-wrapped
-	// its own scrollback on top, and xterm-go re-wraps both.
+	// libvterm re-wraps only the visible screen; xterm-go re-wraps the
+	// scrollback as well.
 	s := New(10, 4)
 	feed(s, "0123456789ABCDEFGHIJ\r\n")
 	for i := 0; i < 12; i++ {

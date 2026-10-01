@@ -18,9 +18,9 @@ type shortcut struct {
 	mods mod.Modifiers
 }
 
-// ParseShortcut reads a key sequence as  writes one: "Ctrl+Shift+T",
-// "F6", "Shift+F6", "Alt+Return". Ctrl means the platform's command key,
-// Command on macOS, as it does in ; Meta means the Control key there.
+// ParseShortcut reads a key sequence written as "Ctrl+Shift+T", "F6",
+// "Shift+F6" or "Alt+Return". Ctrl means the platform's command key,
+// Command on macOS; Meta means the Control key there.
 func ParseShortcut(s string) (key unison.KeyCode, mods mod.Modifiers, ok bool) {
 	parts := strings.Split(s, "+")
 	if len(parts) > 1 && parts[len(parts)-1] == "" {
@@ -125,8 +125,7 @@ const shortcutMods = mod.Shift | mod.Control | mod.Option | mod.Command
 // it has the keyboard and a program is running, every key but the reserved
 // ones. A window that sees keys before the focused panel, as a kvit-ui
 // window's OnKeyDown does, asks this before trying its own shortcuts, so
-// that Ctrl+K reaches the shell rather than the application; kvit-works'
-// terminal does the same with the shortcut override.
+// that Ctrl+K reaches the shell rather than the application.
 func (v *View) Claims(key unison.KeyCode, mods mod.Modifiers) bool {
 	return v.Focused() && v.session != nil && v.session.Running() && !v.isReserved(key, mods)
 }
@@ -559,8 +558,8 @@ func (v *View) mouseWheel(where geom.Point, delta geom.Point, mods mod.Modifiers
 	if v.session == nil {
 		return false
 	}
-	// Three lines a notch, as the terminal scrolled; a Mac's wheel and
-	// trackpad report a distance, which unison scales to pixels.
+	// Three lines a notch; a Mac's wheel and trackpad report a distance,
+	// which unison scales to pixels.
 	if runtime.GOOS == "darwin" {
 		v.wheelOwed += delta.Y * unison.MouseWheelMultiplier / float32(v.cellH)
 	} else {

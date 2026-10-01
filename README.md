@@ -1,4 +1,4 @@
-# kvit-term-go
+# kvit-term
 
 A terminal for Go applications drawn with [unison](https://github.com/richardwilkes/unison):
 a pseudo-terminal layer for Linux, macOS and Windows, a screen and scrollback
@@ -88,7 +88,7 @@ methods for Chinese, Japanese and Korean, and the X11 primary selection.
 ```
 
 Go 1.27 (fetched by the toolchain line in `go.mod`), with cgo off. The
-library draws with kvit-ui's text layer (`~/kvit-ui-go`), which a `replace`
+library draws with kvit-ui's text layer (`../kvit-ui`), which a `replace`
 line in `go.mod` points at.
 
 ## Licence

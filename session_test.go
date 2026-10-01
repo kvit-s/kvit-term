@@ -1,8 +1,7 @@
 package kvitterm
 
 // The whole chain: a child on a pseudo-terminal, its output interpreted
-// onto a screen, and the answers going back. These are the library's
-// session tests (tests/unit/test_session.cpp), case for case.
+// onto a screen, and the answers going back.
 
 import (
 	"runtime"

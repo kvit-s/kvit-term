@@ -1,4 +1,4 @@
-# How kvit-term-go works
+# How kvit-term works
 
 Written for somebody about to change it. `README.md` says what the library
 does; this is the inside, and the reasons for the parts that are not obvious.
@@ -85,8 +85,9 @@ details only showed up by running it:
   a forked child, but not the ones it found ignored, so the first `Start`
   takes over each of SIGHUP, SIGINT, SIGQUIT, SIGTERM and SIGPIPE that is
   ignored and discards it: this process keeps ignoring them, and its
-  children start with the defaults. The library reset them in the child
-  between fork and exec, which Go gives no place for.
+  children start with the defaults. Resetting them in the child between
+  fork and exec is not possible in Go, which runs no code of the caller's
+  there.
 
 A child exits before its last output is necessarily read. The session waits
 for the reader to reach the end of the output, or for it to have been quiet
@@ -96,8 +97,7 @@ open indefinitely), for at most a second, before it reports the exit.
 **Windows** has no fork, no controlling terminal and no SIGWINCH. It has the
 pseudoconsole: made with a pair of pipes, and attached to a child through a
 process-creation attribute, so the child is started with `CreateProcess`
-directly. Two things were found in the library's Windows code and are
-done the same way here:
+directly. Two details of starting it matter:
 
 - *This process's standard handles are cleared while the child starts.*
   Windows copies them into the child's process parameters, where they take
@@ -117,14 +117,13 @@ still running three seconds later is terminated.
 ## The emulator, and the copy of xterm-go
 
 xterm-go is a Go port of xterm.js's headless core, chosen in `go-ui.md`
-section 8 after comparing three Go emulators with libvterm, which the
-library used. It is young (created 2026-03, no releases), so it is kept as a
-copy that changes only deliberately, as the library kept libvterm. Its
-changes are listed in `third_party/xterm/KVIT-PATCH.md`: a current character
-width table, a fix for switching autowrap off and on, a count of lines trimmed
-from the top of the buffer, a way to change the scrollback size, access to its
-parser, scrollback lines stored compactly, and a fix for a panic when a full
-scrollback is narrowed to a few columns.
+section 8 after comparing three Go emulators with libvterm. It is young
+(created 2026-03, no releases), so it is kept as a copy that changes only
+deliberately. Its changes are listed in `third_party/xterm/KVIT-PATCH.md`: a
+current character width table, a fix for switching autowrap off and on, a
+count of lines trimmed from the top of the buffer, a way to change the
+scrollback size, access to its parser, scrollback lines stored compactly,
+and a fix for a panic when a full scrollback is narrowed to a few columns.
 
 `screen/vtdiff_test.go` is the regression test: 73 recorded streams, from
 real programs (vim, less, top, tmux, nano, git log) to one feature at a time,
@@ -158,11 +157,9 @@ that the count restarts at the same point in the stream.
 
 xterm-go re-wraps the scrollback as well as the screen on a resize, keeping a
 per-line flag saying a line continues the one above (`Line.Continuation`).
-The library had to rebuild that flag itself, since libvterm overwrites it
-before handing a line to the scrollback. Like xterm.js, xterm-go does not
-re-wrap the line the cursor is on: the shell redraws the line being edited
-when told the new width, and re-wrapping it as well can leave the prompt
-drawn twice. libvterm re-wraps it.
+Like xterm.js, xterm-go does not re-wrap the line the cursor is on: the shell
+redraws the line being edited when told the new width, and re-wrapping it as
+well can leave the prompt drawn twice. libvterm re-wraps it.
 
 Reading rows back as text joins a wrapped line to the one above, and keeps
 the blanks at the end of a row the line continues past, since those are
@@ -176,8 +173,7 @@ twelve bytes a cell, so a one-word line in a wide terminal costs the word:
 Blanks a program wrote, and cells with a colour of their own, are kept, which
 matters for the same reason as above: at the end of a row a longer line
 wraps through, the blanks are spaces inside that line. The copy of xterm-go
-does this (`BufferLine.Compact`, its KVIT-PATCH.md item 7). The library
-packed stored lines into runs of one style for the same purpose.
+does this (`BufferLine.Compact`, its KVIT-PATCH.md item 7).
 
 ## Drawing
 
@@ -203,19 +199,18 @@ to hold this, in both kinds of font.
 ## Input
 
 Keys that send sequences of their own (Return, Tab, arrows, F1–F12 and the
-rest) and characters typed with Ctrl or Alt are encoded by
-`screen.PressKey` and `TypeChar`, a port of libvterm's `keyboard.c`, so a
-program gets the same bytes it got from the terminal. Plain typing arrives
-as characters. Windows also delivers Ctrl+letter as a control character,
-which is dropped since the key already sent it; Ctrl with Alt on Windows is
-AltGr and is left to type its character. On macOS, Option types characters
-of its own and Command belongs to the application.
+rest) and characters typed with Ctrl or Alt are encoded by `screen.PressKey`
+and `TypeChar`, a port of libvterm's `keyboard.c`, so a program gets the
+bytes a terminal built on libvterm sends it. Plain typing arrives as
+characters. Windows also delivers Ctrl+letter as a control character, which
+is dropped since the key already sent it; Ctrl with Alt on Windows is AltGr
+and is left to type its character. On macOS, Option types characters of its
+own and Command belongs to the application.
 
 Which keys belong to the application is the application's to say:
-`SetReservedShortcuts` takes key sequences as writes them
-(`Ctrl+Shift+T`, `F6`), which the view then leaves alone. Its own are
-Ctrl+Shift+C, V and A (Command on macOS, where Command+C and V work too), and
-Shift+Page Up and Down.
+`SetReservedShortcuts` takes key sequences written as `Ctrl+Shift+T` or `F6`,
+which the view then leaves alone. Its own are Ctrl+Shift+C, V and A (Command
+on macOS, where Command+C and V work too), and Shift+Page Up and Down.
 
 ## What a screen reader is told
 

@@ -1,4 +1,4 @@
-# kvit-term-go
+# kvit-term
 
 This repository is kvit-term, the terminal the Kvit apps embed: a
 pseudo-terminal layer, an emulator with a scrollback, and a unison panel that
@@ -45,7 +45,7 @@ inside, and why, is in `docs/design.md`.
 ./build.sh --shots       # sample screens into build/shots
 ./build.sh --bench       # the emulator's throughput
 ./build.sh --cross       # the demo for Windows, macOS (both) and Linux
-~/kvit-ui-go/tools/check-all.sh   # ./build.sh --test in every Kvit Go repository
+~/kvit-ui/tools/check-all.sh   # ./build.sh --test in every Kvit Go repository
 ```
 
 The git hook in `.githooks/pre-commit` checks the Go files a commit changes:
@@ -60,9 +60,9 @@ through the window's own key dispatch, and never sends input to the desktop.
 ## Conventions
 
 - **Module path.** `github.com/kvit-s/kvit-term`. kvit-ui comes from
-  `../kvit-ui-go` through a `replace` line, and so does kvit-ui's patched
+  `../kvit-ui` through a `replace` line, and so does kvit-ui's patched
   go-text; keep both lines.
-- **unison stays unmodified.** Anything missing goes in this repository or in kvit-ui-go, never into unison.
+- **unison stays unmodified.** Anything missing goes in this repository or in kvit-ui, never into unison.
 - **cgo is off** except for `--race`, and every build must stay
   cross-compilable.
 - **History.** Commit on `main` and keep it linear, with no branches and no

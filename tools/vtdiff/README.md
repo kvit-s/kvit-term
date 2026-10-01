@@ -2,9 +2,9 @@
 
 `screen/vtdiff_test.go` feeds every stream in `screen/testdata/vtdiff/` to
 the Go screen and compares the result, cell by cell, with what libvterm
-0.3.3 made of the same bytes. Those
-libvterm screens are stored in `screen/testdata/vtdiff/libvterm/`, one file
-per stream, because libvterm leaves this machine with the code.
+0.3.3 made of the same bytes. Those libvterm screens are stored in
+`screen/testdata/vtdiff/libvterm/`, one file per stream, so the test does not
+need libvterm.
 
 The streams are recordings of programs in a pseudo-terminal; the tools here
 record new streams and print reference screens.

@@ -2,8 +2,7 @@ package pty
 
 // The pseudo-terminal, proved against termstub rather than a shell: a
 // shell's version, startup files and prompt all vary between machines, and
-// none of them is what these cases are about. These are the library's
-// tests (tests/unit/test_pty.cpp), case for case.
+// none of them is what these cases are about.
 
 import (
 	"bytes"

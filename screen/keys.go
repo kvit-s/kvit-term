@@ -52,8 +52,8 @@ const (
 )
 
 // How a key's sequence is formed. The table and the rules below are
-// libvterm's (keyboard.c), which the kvit-term used, so a program sees
-// the same bytes from the Go terminal as from the one.
+// libvterm's (keyboard.c), so a program gets the bytes a terminal built on
+// libvterm sends it.
 type keyKind uint8
 
 const (

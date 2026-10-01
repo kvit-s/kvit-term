@@ -1,14 +1,12 @@
 package main
 
-// --shots: sample screens drawn headlessly, for the migration log and for
-// looking at what a change did. No child process is run: the bytes a
-// program would write are fed to the session directly.
+// --shots: sample screens drawn headlessly, for looking at what a change
+// did. No child process is run: the bytes a program would write are fed to
+// the session directly.
 
 import (
 	"fmt"
 	"image"
-	"image/color"
-	"image/draw"
 	"image/png"
 	"os"
 	"path/filepath"
@@ -22,9 +20,9 @@ import (
 	"github.com/richardwilkes/unison/enums/align"
 )
 
-// qtSample is what the library's docs/terminal.png shows: colours in all
-// three encodings, the text attributes, accents, a progress line redrawn in
-// place, and a path a compiler would print.
+// qtSample is a sample screen: colours in all three encodings, the text
+// attributes, accents, a progress line redrawn in place, and a path a
+// compiler would print.
 const qtSample = "$ ./demo.sh\r\n" +
 	"colours:    \x1b[1;32mbold green\x1b[0m  \x1b[31mred\x1b[0m  \x1b[33myellow\x1b[0m  \x1b[34mblue\x1b[0m  " +
 	"\x1b[38;5;208m256-orange\x1b[0m  \x1b[38;2;120;180;240mtruecolour\x1b[0m\r\n" +
@@ -67,7 +65,7 @@ func writeShots(dir string) error {
 	}
 	defer scr.Stop()
 
-	// The  library's sample, in its default colours and a 760 × 260 view.
+	// The sample, in the terminal's default colours and a 760 × 260 view.
 	var w *unison.Window
 	var term *view.View
 	s := kvitterm.NewSession()
@@ -78,7 +76,6 @@ func writeShots(dir string) error {
 			return
 		}
 		term = view.New(ui.Fonts)
-		// The  image's font size and margin, so the two line up.
 		term.SetFont("", 15)
 		w.Content().SetBorder(unison.NewEmptyBorder(geom.NewUniformInsets(8)))
 		term.SetSession(s)
@@ -99,11 +96,6 @@ func writeShots(dir string) error {
 	}
 	// Windows stay open until the end: closing the last one would end the
 	// headless application.
-	if qt, err := loadPNG(filepath.Join(os.Getenv("HOME"), "kvit-term", "docs", "terminal.png")); err == nil {
-		if err := savePNG(filepath.Join(dir, "terminal-compare.png"), stack(qt, sample)); err != nil {
-			return err
-		}
-	}
 
 	// The demonstration window in two Kvit themes, with the heading the
 	// shell's marks give, a search open, and a selection.
@@ -151,24 +143,4 @@ func savePNG(path string, img image.Image) error {
 	}
 	defer f.Close()
 	return png.Encode(f, img)
-}
-
-func loadPNG(path string) (image.Image, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	return png.Decode(f)
-}
-
-// stack puts a above b, with a band between them.
-func stack(a, b image.Image) image.Image {
-	ab, bb := a.Bounds(), b.Bounds()
-	gap := 8
-	out := image.NewNRGBA(image.Rect(0, 0, max(ab.Dx(), bb.Dx()), ab.Dy()+gap+bb.Dy()))
-	draw.Draw(out, out.Bounds(), image.NewUniform(color.NRGBA{R: 255, G: 0, B: 255, A: 255}), image.Point{}, draw.Src)
-	draw.Draw(out, image.Rect(0, 0, ab.Dx(), ab.Dy()), a, ab.Min, draw.Src)
-	draw.Draw(out, image.Rect(0, ab.Dy()+gap, bb.Dx(), ab.Dy()+gap+bb.Dy()), b, bb.Min, draw.Src)
-	return out
 }
