@@ -17,7 +17,7 @@
 #   ./build.sh --run         start kvit-term-demo here (needs a display)
 #
 # Everything builds with cgo off, except --race. KVIT_WIN_DIR overrides where Windows
-# builds go (default /mnt/d/projects/kvit-term-go).
+# builds go (default /mnt/d/projects/kvit-term).
 set -euo pipefail
 cd "$(dirname "$0")"
 export CGO_ENABLED=0
@@ -76,7 +76,7 @@ if [ $bench = 1 ]; then
     go test ./screen -run '^$' -bench Feed -benchtime 5x
 fi
 
-dest=${KVIT_WIN_DIR:-/mnt/d/projects/kvit-term-go}
+dest=${KVIT_WIN_DIR:-/mnt/d/projects/kvit-term}
 
 if [ $wintest = 1 ]; then
     # The tests built for Windows and run there, from WSL, with termstub
